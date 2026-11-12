@@ -5,12 +5,12 @@
     <a href="{% url 'store:product_detail' product.pk %}" class="product-card-img-wrap" aria-label="{% trans 'View product' %} {{ product.name }}">
         {% if product.images.first %}
             <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="product-card-fallback" style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(59,130,246,0.08) 100%);">
-                <i data-lucide="package" style="width: 44px; height: 44px; color: var(--color-primary-600); opacity: 0.7;"></i>
+            <div class="product-card-fallback" style="display: none;">
+                <i data-lucide="package" style="width: 40px; height: 40px; opacity: 0.5;"></i>
             </div>
         {% else %}
-            <div class="product-card-fallback" style="display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(59,130,246,0.08) 100%);">
-                <i data-lucide="package" style="width: 44px; height: 44px; color: var(--color-primary-600); opacity: 0.7;"></i>
+            <div class="product-card-fallback">
+                <i data-lucide="package" style="width: 40px; height: 40px; opacity: 0.5;"></i>
             </div>
         {% endif %}
         {% if product.compare_at_price and product.compare_at_price > product.price %}
@@ -19,10 +19,10 @@
     </a>
     <div class="product-card-body">
         <span class="product-category-tag">{{ product.category.name|default:"General" }}</span>
-        <a href="{% url 'store:product_detail' product.pk %}" style="text-decoration: none;">
+        <a href="{% url 'store:product_detail' product.pk %}" style="text-decoration: none; color: inherit;">
             <h3 class="product-title">{{ product.name }}</h3>
         </a>
-        <div style="font-size: var(--font-size-2xs); color: var(--color-text-muted); margin-bottom: var(--space-2);">
+        <div class="product-seller-text">
             {% trans "Sold by" %} <strong>{{ product.vendor.business_name }}</strong>
         </div>
         <div class="product-price-row">
@@ -33,18 +33,18 @@
         </div>
         {% if show_add_to_cart %}
             {% if product.inventory and product.inventory.quantity > 0 %}
-            <form action="{% url 'orders:cart_add' %}" method="post" style="margin-top: var(--space-3);">
+            <form action="{% url 'orders:cart_add' %}" method="post" style="margin-top: 12px;">
                 {% csrf_token %}
                 <input type="hidden" name="product_id" value="{{ product.pk }}">
                 <input type="hidden" name="quantity" value="1">
-                <button type="submit" class="btn btn-primary btn-block" style="justify-content: center; font-weight: var(--font-weight-bold); border-radius: var(--radius-lg); padding: var(--space-2-5); font-size: var(--font-size-sm);">
-                    <i data-lucide="shopping-cart" style="width: 16px; height: 16px; margin-right: var(--space-1-5);"></i>
+                <button type="submit" class="btn-card-action btn-card-add">
+                    <i data-lucide="shopping-cart" style="width: 15px; height: 15px; margin-right: 6px;"></i>
                     {% trans "Add to Cart" %}
                 </button>
             </form>
             {% else %}
-            <div style="margin-top: var(--space-3);">
-                <button type="button" class="btn btn-secondary btn-block" disabled style="justify-content: center; font-weight: var(--font-weight-medium); border-radius: var(--radius-lg); padding: var(--space-2-5); font-size: var(--font-size-sm); opacity: 0.6; cursor: not-allowed;">
+            <div style="margin-top: 12px;">
+                <button type="button" class="btn-card-action btn-card-disabled" disabled>
                     {% trans "Out of Stock" %}
                 </button>
             </div>

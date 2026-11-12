@@ -2,114 +2,104 @@
 {% load static i18n %}
 
 {% block storefront_content %}
-<div style="display: grid; grid-template-columns: 280px 1fr; gap: var(--space-8); align-items: start;">
+<div class="store-catalog-layout">
     <!-- Filter Sidebar -->
-    <aside class="card" style="height: fit-content; position: sticky; top: var(--space-4);">
-        <div class="card-body">
-            <div class="section-header" style="margin-bottom: 0;">
-                <h3 class="section-title">{% trans "Filters" %}</h3>
-                {% if search_query or active_category or current_min_price or current_max_price or current_in_stock %}
-                <a href="{% url 'store:product_list' %}" class="btn btn-outline btn-sm" style="margin-left: auto;">
-                    {% trans "Clear all" %}
-                </a>
-                {% endif %}
-            </div>
-
-            <!-- Categories Section -->
-            <div style="margin-bottom: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--color-border-primary);">
-                <h4 style="font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 var(--space-3) 0; letter-spacing: 0.05em;">
-                    {% trans "Category" %}
-                </h4>
-                <ul style="list-style: none; padding: 0; margin: 0; font-size: var(--font-size-sm); display: flex; flex-direction: column; gap: var(--space-2);">
-                    <li>
-                        <a href="{% url 'store:product_list' %}{% if search_query %}?q={{ search_query }}{% endif %}" style="text-decoration: none; color: {% if not active_category %}var(--color-primary-600); font-weight: var(--font-weight-semibold);{% else %}var(--color-text-secondary);{% endif %}">
-                            {% trans "All Categories" %}
-                        </a>
-                    </li>
-                    {% for cat in categories %}
-                    <li>
-                        <a href="{% url 'store:product_list' %}?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}" style="text-decoration: none; color: {% if active_category.slug == cat.slug %}var(--color-primary-600); font-weight: var(--font-weight-semibold);{% else %}var(--color-text-secondary);{% endif %}">
-                            {{ cat.name }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-            <!-- Price Range Filter Form -->
-            <form method="get" action="{% url 'store:product_list' %}" style="display: flex; flex-direction: column; gap: var(--space-4);">
-                {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
-                {% if active_category %}<input type="hidden" name="category" value="{{ active_category.slug }}">{% endif %}
-                {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
-
-                <div>
-                    <h4 style="font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 var(--space-2) 0; letter-spacing: 0.05em;">
-                        {% trans "Price Range (₹)" %}
-                    </h4>
-                    <div style="display: flex; gap: var(--space-2); align-items: center;">
-                        <input type="number" name="min_price" class="form-input" placeholder="{% trans 'Min' %}" value="{{ current_min_price }}">
-                        <span style="color: var(--color-text-muted);">—</span>
-                        <input type="number" name="max_price" class="form-input" placeholder="{% trans 'Max' %}" value="{{ current_max_price }}">
-                    </div>
-                </div>
-
-                <!-- In-Stock Filter -->
-                <div class="checkbox-wrapper" style="cursor: pointer;">
-                    <input type="checkbox" name="in_stock" value="1" {% if current_in_stock %}checked{% endif %} class="form-checkbox" id="id_in_stock">
-                    <label for="id_in_stock" class="checkbox-label">{% trans "In Stock Only" %}</label>
-                </div>
-
-                <button type="submit" class="btn btn-outline btn-block" style="justify-content: center;">
-                    {% trans "Apply Filters" %}
-                </button>
-            </form>
+    <aside class="store-filter-sidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; padding: 0; border: none;">{% trans "Filters" %}</h3>
+            {% if search_query or active_category or current_min_price or current_max_price or current_in_stock %}
+            <a href="{% url 'store:product_list' %}" style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--store-black); text-decoration: underline;">
+                {% trans "Clear all" %}
+            </a>
+            {% endif %}
         </div>
+
+        <!-- Categories Section -->
+        <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--store-border);">
+            <h4>{% trans "Category" %}</h4>
+            <ul class="catalog-filter-list">
+                <li>
+                    <a href="{% url 'store:product_list' %}{% if search_query %}?q={{ search_query }}{% endif %}" class="{% if not active_category %}active{% endif %}">
+                        {% trans "All Categories" %}
+                    </a>
+                </li>
+                {% for cat in categories %}
+                <li>
+                    <a href="{% url 'store:product_list' %}?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}" class="{% if active_category.slug == cat.slug %}active{% endif %}">
+                        {{ cat.name }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Price Range & In-Stock Filter Form -->
+        <form method="get" action="{% url 'store:product_list' %}" style="display: flex; flex-direction: column; gap: 16px;">
+            {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+            {% if active_category %}<input type="hidden" name="category" value="{{ active_category.slug }}">{% endif %}
+            {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
+
+            <div>
+                <h4>{% trans "Price Range (₹)" %}</h4>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="number" name="min_price" class="form-filter-input" placeholder="{% trans 'Min' %}" value="{{ current_min_price }}">
+                    <span style="color: var(--store-text-muted);">—</span>
+                    <input type="number" name="max_price" class="form-filter-input" placeholder="{% trans 'Max' %}" value="{{ current_max_price }}">
+                </div>
+            </div>
+
+            <!-- In-Stock Filter -->
+            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" name="in_stock" value="1" {% if current_in_stock %}checked{% endif %} id="id_in_stock" style="accent-color: var(--store-black); width: 16px; height: 16px; cursor: pointer;">
+                <label for="id_in_stock" style="font-size: 13px; color: var(--store-text); cursor: pointer; user-select: none;">{% trans "In Stock Only" %}</label>
+            </div>
+
+            <button type="submit" class="btn-card-action btn-card-add" style="margin-top: 8px;">
+                {% trans "Apply Filters" %}
+            </button>
+        </form>
     </aside>
 
     <!-- Main Results Column -->
-    <div class="flex-1">
+    <div style="flex: 1; min-width: 0;">
         <!-- Header Strip: Title, Count & Sorting Dropdown -->
-        <div class="card" style="border: none; margin-bottom: var(--space-6);">
-            <div class="card-body" style="padding: var(--space-4) var(--space-6);">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
-                    <div>
-                        <h1 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0;">
-                            {% if active_category %}{{ active_category.name }}{% elif search_query %}{% trans "Results for" %} "{{ search_query }}"{% else %}{% trans "All Products" %}{% endif %}
-                        </h1>
-                        <p style="margin: var(--space-1) 0 0 0; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
-                            {% if products %}
-                                {% trans "Showing" %} {{ page_obj.start_index }}–{{ page_obj.end_index }} {% trans "of" %} {{ paginator.count }} {% trans "items" %}
-                            {% else %}
-                                {% trans "0 items found" %}
-                            {% endif %}
-                        </p>
-                    </div>
-
-                    <!-- Sorting Form -->
-                    <form method="get" style="display: flex; align-items: center; gap: var(--space-2);">
-                        {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
-                        {% if active_category %}<input type="hidden" name="category" value="{{ active_category.slug }}">{% endif %}
-                        {% if current_min_price %}<input type="hidden" name="min_price" value="{{ current_min_price }}">{% endif %}
-                        {% if current_max_price %}<input type="hidden" name="max_price" value="{{ current_max_price }}">{% endif %}
-                        {% if current_in_stock %}<input type="hidden" name="in_stock" value="{{ current_in_stock }}">{% endif %}
-
-                        <label for="id_sort" style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: var(--font-weight-medium); white-space: nowrap; margin: 0;">
-                            {% trans "Sort by:" %}
-                        </label>
-                        <select name="sort" id="id_sort" class="form-select" onchange="this.form.submit()">
-                            <option value="featured" {% if current_sort == 'featured' %}selected{% endif %}>{% trans "Featured" %}</option>
-                            <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>{% trans "Price: Low to High" %}</option>
-                            <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>{% trans "Price: High to Low" %}</option>
-                            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>{% trans "Newest Arrivals" %}</option>
-                        </select>
-                    </form>
-                </div>
+        <div class="catalog-results-header">
+            <div>
+                <h1 style="font-size: 18px; font-weight: 700; color: var(--store-black); margin: 0; letter-spacing: -0.01em;">
+                    {% if active_category %}{{ active_category.name }}{% elif search_query %}{% trans "Results for" %} "{{ search_query }}"{% else %}{% trans "All Products" %}{% endif %}
+                </h1>
+                <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--store-text-muted);">
+                    {% if products %}
+                        {% trans "Showing" %} {{ page_obj.start_index }}–{{ page_obj.end_index }} {% trans "of" %} {{ paginator.count }} {% trans "items" %}
+                    {% else %}
+                        {% trans "0 items found" %}
+                    {% endif %}
+                </p>
             </div>
+
+            <!-- Sorting Form -->
+            <form method="get" style="display: flex; align-items: center; gap: 8px;">
+                {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+                {% if active_category %}<input type="hidden" name="category" value="{{ active_category.slug }}">{% endif %}
+                {% if current_min_price %}<input type="hidden" name="min_price" value="{{ current_min_price }}">{% endif %}
+                {% if current_max_price %}<input type="hidden" name="max_price" value="{{ current_max_price }}">{% endif %}
+                {% if current_in_stock %}<input type="hidden" name="in_stock" value="{{ current_in_stock }}">{% endif %}
+
+                <label for="id_sort" style="font-size: 12px; color: var(--store-text-muted); font-weight: 500; white-space: nowrap; margin: 0;">
+                    {% trans "Sort by:" %}
+                </label>
+                <select name="sort" id="id_sort" class="form-filter-input" style="width: auto; padding: 6px 12px;" onchange="this.form.submit()">
+                    <option value="featured" {% if current_sort == 'featured' %}selected{% endif %}>{% trans "Featured" %}</option>
+                    <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>{% trans "Price: Low to High" %}</option>
+                    <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>{% trans "Price: High to Low" %}</option>
+                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>{% trans "Newest Arrivals" %}</option>
+                </select>
+            </form>
         </div>
 
         <!-- Products Grid -->
         {% if products %}
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-6);">
+        <div class="product-responsive-grid">
             {% for product in products %}
             {% include 'storefront/partials/product_card.html' with product=product show_add_to_cart=True %}
             {% endfor %}
@@ -117,7 +107,9 @@
 
         <!-- Pagination -->
         {% if is_paginated %}
-        {% include 'partials/pagination.html' with page_obj=page_obj search_query=search_query active_category=active_category current_sort=current_sort %}
+        <div style="margin-top: 36px;">
+            {% include 'partials/pagination.html' with page_obj=page_obj search_query=search_query active_category=active_category current_sort=current_sort %}
+        </div>
         {% endif %}
 
         {% else %}

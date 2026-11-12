@@ -63,13 +63,13 @@
     background-color: var(--color-primary-600);
     color: var(--color-neutral-0);
     border-color: var(--color-primary-600);
-    box-shadow: var(--shadow-sm), 0 0 0 1px rgb(99 102 241 / 0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover:not(:disabled) {
     background-color: var(--color-primary-700);
     border-color: var(--color-primary-700);
-    box-shadow: var(--shadow-md), 0 0 0 1px rgb(99 102 241 / 0.15);
+    box-shadow: var(--shadow-md);
     transform: translateY(-1px);
 }
 
@@ -281,7 +281,7 @@
 }
 
 .form-select:focus {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 
 /* Form Input Sizes */
@@ -921,10 +921,10 @@
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--color-neutral-0);
-    background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
+    background: var(--color-brand-navy, #172554);
     border-radius: var(--radius-full);
     overflow: hidden;
-    box-shadow: var(--shadow-sm), 0 0 0 1px rgb(99 102 241 / 0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 .avatar-sm { width: 32px; height: 32px; font-size: var(--font-size-xs); }

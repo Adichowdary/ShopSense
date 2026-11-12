@@ -83,7 +83,7 @@
         <div class="va-panel-card">
             <div class="va-panel-header">
                 <h3 class="va-panel-title">
-                    <i data-lucide="building-2" style="width: 18px; height: 18px; color: #4f46e5;"></i>
+                    <i data-lucide="building-2" style="width: 18px; height: 18px; color: var(--color-primary-600, #2563eb);"></i>
                     {% trans "Business & Company Profile" %}
                 </h3>
             </div>
@@ -208,16 +208,16 @@
     <!-- Right Column: Decision Workbench & Audit Trail -->
     <div>
         <!-- Review Action Panel -->
-        <div class="va-panel-card" style="border-top: 4px solid #4f46e5;">
+        <div class="va-panel-card" style="border-top: 4px solid var(--color-primary-600, #2563eb);">
             <div class="va-panel-header">
                 <h3 class="va-panel-title">
-                    <i data-lucide="gavel" style="width: 18px; height: 18px; color: #4f46e5;"></i>
+                    <i data-lucide="gavel" style="width: 18px; height: 18px; color: var(--color-primary-600, #2563eb);"></i>
                     {% trans "Review Decision" %}
                 </h3>
             </div>
             <div class="va-panel-body">
                 {% if application.admin_notes %}
-                <div style="margin-bottom: var(--space-5); padding: var(--space-4); background-color: var(--color-bg-secondary); border-left: 3px solid #4f46e5; border-radius: var(--radius-md);">
+                <div style="margin-bottom: var(--space-5); padding: var(--space-4); background-color: var(--color-bg-secondary); border-left: 3px solid var(--color-primary-600, #2563eb); border-radius: var(--radius-md);">
                     <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 4px;">
                         {% trans "Latest Decision Notes" %}
                     </div>
@@ -294,7 +294,7 @@
                 </form>
                 {% else %}
                 <div style="background-color: var(--color-bg-secondary); border-radius: var(--radius-xl); padding: var(--space-5); text-align: center;">
-                    <div style="width: 44px; height: 44px; border-radius: 50%; background-color: rgba(79, 70, 229, 0.1); color: #4f46e5; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-3);">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background-color: rgba(37, 99, 235, 0.1); color: var(--color-primary-600, #2563eb); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-3);">
                         <i data-lucide="lock" style="width: 20px; height: 20px;"></i>
                     </div>
                     <h4 style="margin: 0 0 6px; font-size: var(--font-size-base); font-weight: 700;">

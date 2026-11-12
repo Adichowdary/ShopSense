@@ -12,7 +12,7 @@
 </div>
 
 {% if items %}
-<div style="display: grid; grid-template-columns: 1fr 340px; gap: var(--space-8); align-items: start;">
+<div class="store-cart-layout">
     <!-- Cart Items -->
     <div class="card" style="padding: var(--space-6);">
         <!-- Free shipping progress -->
@@ -131,7 +131,7 @@
             </div>
         </div>
 
-        <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-block btn-lg" style="background-color: var(--store-accent); color: var(--color-neutral-900); border: none; font-weight: var(--font-weight-bold); border-radius: var(--radius-lg);" id="btn-proceed-checkout">
+        <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-store-primary btn-block btn-lg" style="border-radius: var(--radius-lg);" id="btn-proceed-checkout">
             {% trans "Proceed to Checkout" %}
         </a>
 
@@ -154,7 +154,7 @@
     <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); max-width: 380px; margin: 0 auto var(--space-6);">
         {% trans "Explore today's top deals, trending electronics, and fresh arrivals to fill your cart." %}
     </p>
-    <a href="{% url 'store:product_list' %}" class="btn btn-primary btn-lg" style="background-color: var(--store-accent); color: var(--color-neutral-900); font-weight: var(--font-weight-bold); border-radius: var(--radius-lg); display: inline-flex; align-items: center; gap: var(--space-1-5);">
+    <a href="{% url 'store:product_list' %}" class="btn btn-primary btn-store-primary btn-lg" style="border-radius: var(--radius-lg); display: inline-flex; align-items: center; gap: var(--space-1-5);">
         <i data-lucide="shopping-bag" style="width: 18px; height: 18px;"></i>
         {% trans "Start Shopping" %}
     </a>
