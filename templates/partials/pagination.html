@@ -2,7 +2,7 @@
 {# Reusable pagination component #}
 {# Usage: {% include 'partials/pagination.html' with page_obj=page_obj search_query=search_query active_category=active_category current_sort=current_sort %} #}
 {% if is_paginated %}
-<nav class="pagination" aria-label="{% trans "Pagination %}">
+<nav class="pagination" aria-label="{% trans "Pagination" %}">
     {% if page_obj.has_previous %}
     <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if active_category %}&category={{ active_category.slug }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="pagination-link" aria-label="{% trans "Previous page" %}" rel="prev">
         <i data-lucide="chevron-left" style="width: 16px; height: 16px;" aria-hidden="true"></i>

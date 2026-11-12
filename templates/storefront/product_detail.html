@@ -18,7 +18,8 @@
     <div>
         <div class="product-detail-gallery">
             {% if primary_image %}
-                <img id="main-product-img" src="{{ primary_image.image.url }}" alt="{{ product.name }}" loading="lazy">
+                <img id="main-product-img" src="{{ primary_image.image.url }}" alt="{{ product.name }}" loading="lazy" onerror="this.style.display='none'; document.getElementById('main-product-fallback').style.display='block';">
+                <i id="main-product-fallback" data-lucide="package" style="display: none; width: 80px; height: 80px; color: var(--color-text-muted);"></i>
             {% else %}
                 <i data-lucide="package" style="width: 80px; height: 80px; color: var(--color-text-muted);"></i>
             {% endif %}

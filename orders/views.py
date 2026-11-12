@@ -391,6 +391,29 @@ class PlaceOrderView(LoginRequiredMixin, View):
                         product.status = Product.Status.OUT_OF_STOCK
                         product.save(update_fields=['status', 'updated_at'])
 
+                    # Synchronize warehouse stock and audit movement ledger
+                    try:
+                        from inventory.models import WarehouseStock, StockMovement
+                        from inventory.services.stock_services import StockService
+
+                        warehouse = StockService.get_or_create_default_warehouse()
+                        wh_stock = WarehouseStock.objects.filter(warehouse=warehouse, product=product).first()
+                        if wh_stock:
+                            wh_stock.quantity = max(0, wh_stock.quantity - item.quantity)
+                            wh_stock.save(update_fields=['quantity', 'updated_at'])
+
+                        StockMovement.objects.create(
+                            product=product,
+                            warehouse=warehouse,
+                            quantity_change=-item.quantity,
+                            movement_type=StockMovement.MovementType.SALE,
+                            order=order,
+                            reason=f"Storefront checkout order #{order.order_number}",
+                            performed_by=request.user if request.user.is_authenticated else None,
+                        )
+                    except Exception as stock_err:
+                        logger.warning(f"Could not sync warehouse stock movement for {product.sku}: {stock_err}")
+
                 # Record Payment
                 Payment.objects.create(
                     order=order,

@@ -3,7 +3,7 @@ Customer-facing Storefront Views for ShopSense.
 """
 
 from decimal import Decimal
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext_lazy as _
@@ -39,9 +39,10 @@ class StorefrontHomeView(TemplateView):
             'featured_products': active_products.filter(is_featured=True).order_by('-created_at')[:8],
             'new_arrivals': active_products.order_by('-created_at')[:8],
             'deal_products': (
-                active_products.filter(compare_at_price__gt=0)
-                .filter(compare_at_price__gt=Product.objects.filter(pk=models.OuterRef('pk')).values('price') if hasattr(models, 'OuterRef') else active_products)
-                if False else active_products.filter(compare_at_price__isnull=False).order_by('-created_at')[:8]
+                active_products.filter(
+                    compare_at_price__isnull=False,
+                    compare_at_price__gt=F('price'),
+                ).order_by('-created_at')[:8]
             ),
         })
         return context
@@ -57,7 +58,7 @@ class StorefrontProductListView(ListView):
 
     def get_queryset(self):
         queryset = (
-            Product.objects.filter(status=Product.Status.ACTIVE)
+            Product.objects.filter(status__in=[Product.Status.ACTIVE, Product.Status.OUT_OF_STOCK])
             .select_related('vendor', 'category', 'inventory')
             .prefetch_related('images')
         )
@@ -75,10 +76,10 @@ class StorefrontProductListView(ListView):
                 | Q(vendor__business_name__icontains=search_query)
             )
 
-        # Category filter (by slug or ID)
-        category_slug = params.get('category', '').strip()
+        # Category filter (by slug or ID, from kwargs route or query param)
+        category_slug = self.kwargs.get('category') or params.get('category', '').strip()
         if category_slug:
-            if category_slug.isdigit():
+            if str(category_slug).isdigit():
                 queryset = queryset.filter(category_id=int(category_slug))
             else:
                 queryset = queryset.filter(category__slug=category_slug)
@@ -121,10 +122,10 @@ class StorefrontProductListView(ListView):
         context = super().get_context_data(**kwargs)
         params = self.request.GET
 
-        category_slug = params.get('category', '').strip()
+        category_slug = self.kwargs.get('category') or params.get('category', '').strip()
         active_category = None
         if category_slug:
-            if category_slug.isdigit():
+            if str(category_slug).isdigit():
                 active_category = Category.objects.filter(pk=int(category_slug)).first()
             else:
                 active_category = Category.objects.filter(slug=category_slug).first()
@@ -150,9 +151,9 @@ class StorefrontProductDetailView(DetailView):
     context_object_name = 'product'
 
     def get_queryset(self):
-        # Customers can only view active products
+        # Customers can view active and out-of-stock products, but not drafts or unlisted
         return (
-            Product.objects.filter(status=Product.Status.ACTIVE)
+            Product.objects.filter(status__in=[Product.Status.ACTIVE, Product.Status.OUT_OF_STOCK])
             .select_related('vendor', 'category', 'inventory')
             .prefetch_related('images')
         )
