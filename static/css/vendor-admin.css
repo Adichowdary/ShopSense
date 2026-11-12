@@ -721,3 +721,70 @@
     background-color: var(--color-primary-600, #2563eb);
     box-shadow: 0 0 0 3px var(--color-bg-primary);
 }
+
+/* ===== Responsive Breakpoints for Vendor Admin ===== */
+@media (max-width: 768px) {
+    .va-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .va-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .va-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-3);
+    }
+
+    .va-tabs-wrap {
+        overflow-x: auto;
+        padding-bottom: var(--space-1);
+    }
+
+    .va-search-form {
+        width: 100%;
+    }
+
+    .va-detail-hero {
+        padding: var(--space-4);
+    }
+
+    .va-detail-hero-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .va-assets-row {
+        grid-template-columns: 1fr;
+    }
+
+    .va-asset-logo {
+        height: 120px;
+        width: 120px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .va-header-title h1 {
+        font-size: var(--font-size-xl);
+    }
+
+    .va-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .va-panel-body {
+        padding: var(--space-4);
+    }
+
+    .va-panel-header {
+        padding: var(--space-3) var(--space-4);
+    }
+}

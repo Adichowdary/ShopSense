@@ -12,7 +12,8 @@
             {% trans "Refined Aesthetics for Fashion, Living & Home" %}
         </h1>
         <p class="hero-subtitle">
-            {% trans "Explore 300 verified marketplace pieces across 30 authentic makers. Minimalist craftsmanship, sustainable materials, and complimentary express delivery." %}
+            {% trans "Explore 300 verified marketplace pieces across 30 authentic makers. Minimalist craftsmanship,
+            sustainable materials, and complimentary express delivery." %}
         </p>
         <div class="hero-actions">
             <a href="{% url 'store:product_list' %}" class="btn-hero-primary">
@@ -37,7 +38,8 @@
 
     <div class="category-highlights-grid">
         {% for cat in categories %}
-        <a href="{% url 'store:product_list' %}?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}" class="category-card">
+        <a href="{% url 'store:product_list' %}?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}"
+            class="category-card">
             <div class="category-icon-wrap">
                 <i data-lucide="tag" style="width: 18px; height: 18px;"></i>
             </div>
@@ -55,7 +57,8 @@
     <div class="section-header">
         <div>
             <h2 class="section-title">{% trans "Featured Products" %}</h2>
-            <p style="margin: 4px 0 0; color: var(--store-text-muted); font-size: 13px;">{% trans "Handpicked marketplace selections with highest customer satisfaction" %}</p>
+            <p style="margin: 4px 0 0; color: var(--store-text-muted); font-size: 13px;">{% trans "Handpicked
+                marketplace selections with highest customer satisfaction" %}</p>
         </div>
         <a href="{% url 'store:product_list' %}?sort=featured" class="section-action">
             {% trans "See More" %} <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
@@ -75,7 +78,8 @@
     <div class="section-header">
         <div>
             <h2 class="section-title">{% trans "New Arrivals" %}</h2>
-            <p style="margin: 4px 0 0; color: var(--store-text-muted); font-size: 13px;">{% trans "Fresh additions and latest releases directly from independent makers" %}</p>
+            <p style="margin: 4px 0 0; color: var(--store-text-muted); font-size: 13px;">{% trans "Fresh additions and
+                latest releases directly from independent makers" %}</p>
         </div>
         <a href="{% url 'store:product_list' %}?sort=newest" class="section-action">
             {% trans "View Catalog" %} <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
@@ -91,7 +95,8 @@
     {% else %}
     {% trans "No Active Products Yet" as empty_title %}
     {% trans "New items are arriving soon. Check back shortly!" as empty_message %}
-    {% include 'storefront/partials/empty_state.html' with icon="package-search" title=empty_title message=empty_message %}
+    {% include 'storefront/partials/empty_state.html' with icon="package-search" title=empty_title message=empty_message
+    %}
     {% endif %}
 </section>
 {% endblock %}
