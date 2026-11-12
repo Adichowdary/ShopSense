@@ -1,0 +1,162 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} | ShopSense{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+{% endblock %}
+
+{% block page_content %}
+<div class="bi-dashboard-container">
+    <!-- Top Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: 0;">{% trans "Customer Intelligence & RFM Segmentation" %}</h1>
+            <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin: var(--space-1) 0 0 0;">
+                {% trans "Behavioral clustering, customer lifetime value (CLV), and retention analytics." %}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'dashboard:export_report' %}?report=customers&format=pdf" class="btn btn-outline btn-sm">
+                <i data-lucide="file-text" class="btn-icon"></i> {% trans "Export Customer Report (PDF)" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Macro Metrics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-primary-600);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Customer Lifetime Value" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                ₹{{ metrics.customer_lifetime_value|floatformat:2 }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "1-year estimated value" %}</div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-success-600);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Average Customer Spend" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                ₹{{ metrics.average_customer_spend|floatformat:2 }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Historical spend per user" %}</div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-info-600);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Purchase Frequency" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                {{ metrics.purchase_frequency }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Average orders per customer" %}</div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-warning-500);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Repeat Purchase Rate" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                {{ metrics.repeat_purchase_rate }}%
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{{ metrics.multi_order_customers }} {% trans "customers with ≥ 2 orders" %}</div>
+        </div>
+    </div>
+
+    <!-- RFM Segment Summary Cards -->
+    <div style="margin-bottom: var(--space-6);">
+        <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+            {% trans "RFM Behavioral Customer Segments" %}
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);">
+            {% for s in metrics.segments %}
+            <div class="card" style="padding: var(--space-4); background: var(--color-surface);">
+                <div style="font-weight: 600; color: var(--color-text); font-size: var(--font-size-sm);">{{ s.name }}</div>
+                <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary-600); margin: var(--space-1) 0;">
+                    {{ s.count }} <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: normal;">users</span>
+                </div>
+                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                    {% trans "Total Spend" %}: ₹{{ s.total_spent|floatformat:2 }}<br>
+                    {% trans "Avg Frequency" %}: {{ s.avg_frequency }} ords
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Segments Chart -->
+    <div class="card" style="padding: var(--space-5); background: var(--color-surface); margin-bottom: var(--space-6);">
+        <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+            {% trans "Segment Size vs Revenue Contribution" %}
+        </h3>
+        <div id="segmentsChart" style="min-height: 320px; width: 100%;"></div>
+    </div>
+
+    <!-- Tables Grid: High Spenders & Dormant Customers -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+        <!-- High Spenders -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Top Customer Spenders" %}
+            </h3>
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Customer" %}</th>
+                            <th>{% trans "Segment" %}</th>
+                            <th>{% trans "Spent" %}</th>
+                            <th>{% trans "Orders" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in metrics.high_spenders %}
+                        <tr>
+                            <td><strong>{{ c.name }}</strong><br><small class="text-muted">{{ c.email }}</small></td>
+                            <td><span class="badge badge-primary">{{ c.segment }}</span></td>
+                            <td>₹{{ c.monetary_value|floatformat:2 }}</td>
+                            <td>{{ c.frequency }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">{% trans "No spend records found." %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Dormant Customers -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Dormant Cohort (Reactivation Candidates)" %}
+            </h3>
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Customer" %}</th>
+                            <th>{% trans "Inactive Days" %}</th>
+                            <th>{% trans "Past Spend" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in metrics.dormant_customers %}
+                        <tr>
+                            <td><strong>{{ d.name }}</strong><br><small class="text-muted">{{ d.email }}</small></td>
+                            <td><span class="badge badge-warning">{{ d.recency_days }} {% trans "days ago" %}</span></td>
+                            <td>₹{{ d.monetary_value|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center text-muted">{% trans "No dormant customers currently flagged." %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var segData = JSON.parse('{{ segments_chart_json|escapejs }}');
+    Plotly.newPlot('segmentsChart', segData.data, segData.layout, {responsive: true, displayModeBar: false});
+});
+</script>
+{% endblock %}
+

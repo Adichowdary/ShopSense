@@ -1,0 +1,163 @@
+{% extends 'storefront/base_storefront.html' %}
+{% load static i18n %}
+
+{% block storefront_content %}
+<div style="margin-bottom: var(--space-6);">
+    <h1 style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0; line-height: var(--line-height-tight);">
+        {% trans "Shopping Cart" %}
+    </h1>
+    <p style="margin: var(--space-1) 0 0 0; color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+        {% if items %}{% trans "Review your items and proceed to checkout" %}{% endif %}
+    </p>
+</div>
+
+{% if items %}
+<div style="display: grid; grid-template-columns: 1fr 340px; gap: var(--space-8); align-items: start;">
+    <!-- Cart Items -->
+    <div class="card" style="padding: var(--space-6);">
+        <!-- Free shipping progress -->
+        <div style="background: var(--color-bg-secondary); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-6); border: 1px solid var(--color-border-primary);">
+            {% if qualifies_for_free_shipping %}
+            <div style="color: var(--color-success-600); font-weight: var(--font-weight-bold); font-size: var(--font-size-sm); display: flex; align-items: center; gap: var(--space-1-5);">
+                <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+                {% trans "Congratulations! Your order qualifies for FREE Shipping." %}
+            </div>
+            {% else %}
+            <div style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+                {% trans "Add" %} <strong style="color: var(--color-error-600);">₹{{ amount_needed_for_free_shipping }}</strong> {% trans "more of eligible items to get FREE Shipping." %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-5);">
+            {% for item in items %}
+            <div style="display: flex; gap: var(--space-5); padding-bottom: var(--space-5); border-bottom: 1px solid var(--color-bg-tertiary); align-items: flex-start;">
+                <!-- Product Thumbnail -->
+                <a href="{% url 'store:product_detail' item.product.pk %}" style="width: 80px; height: 80px; border-radius: var(--radius-lg); border: 1px solid var(--color-border-primary); background: var(--color-bg-secondary); flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    {% if item.product.images.first %}
+                        <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" style="width: 100%; height: 100%; object-fit: contain;" loading="lazy">
+                    {% else %}
+                        <i data-lucide="package" style="width: 32px; height: 32px; color: var(--color-text-muted);"></i>
+                    {% endif %}
+                </a>
+
+                <!-- Details & Actions -->
+                <div class="flex-1">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <a href="{% url 'store:product_detail' item.product.pk %}" style="text-decoration: none; color: var(--color-text-primary); font-weight: var(--font-weight-bold); font-size: var(--font-size-sm); line-height: var(--line-height-snug);">
+                                {{ item.product.name }}
+                            </a>
+                            <div style="font-size: var(--font-size-2xs); color: var(--color-text-muted); margin-top: var(--space-0-5);">
+                                {% trans "Store:" %} <strong>{{ item.product.vendor.business_name }}</strong> • SKU: <code>{{ item.product.sku }}</code>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-text-primary);">
+                                ₹{{ item.total_price }}
+                            </div>
+                            <div style="font-size: var(--font-size-2xs); color: var(--color-text-muted);">
+                                (₹{{ item.product.price }} {% trans "each" %})
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantity controls and Remove button -->
+                    <div style="display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap;">
+                        <form action="{% url 'orders:cart_update' item.pk %}" method="post" style="display: flex; align-items: center; gap: var(--space-1-5);">
+                            {% csrf_token %}
+                            <label for="qty-{{ item.pk }}" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--color-text-secondary); margin: 0;">{% trans "Qty:" %}</label>
+                            <input type="number" name="quantity" id="qty-{{ item.pk }}" value="{{ item.quantity }}" min="1" max="{{ item.product.inventory.quantity }}" class="form-input form-input-sm" style="width: 60px; text-align: center;">
+                            <button type="submit" class="btn btn-outline btn-sm">
+                                {% trans "Update" %}
+                            </button>
+                        </form>
+
+                        <span style="color: var(--color-text-muted);">|</span>
+
+                        <form action="{% url 'orders:cart_remove' item.pk %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" style="background: none; border: none; color: var(--color-error-600); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); cursor: pointer; padding: 0;" data-confirm="{% trans 'Remove this item from your cart?' %}">
+                                {% trans "Delete" %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--color-border-primary);">
+            <form action="{% url 'orders:cart_clear' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-sm" style="color: var(--color-text-muted);">
+                    {% trans "Clear Entire Cart" %}
+                </button>
+            </form>
+            <div style="font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                {% trans "Subtotal" %} ({{ cart.total_items }} {% trans "items" %}): <strong style="font-size: var(--font-size-lg);">₹{{ subtotal }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="card" style="padding: var(--space-6); position: sticky; top: var(--space-4);">
+        <h3 style="font-size: var(--font-size-base); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0 0 var(--space-4) 0; border-bottom: 1px solid var(--color-border-primary); padding-bottom: var(--space-3);">
+            {% trans "Order Summary" %}
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--font-size-sm); margin-bottom: var(--space-6);">
+            <div style="display: flex; justify-content: space-between; color: var(--color-text-secondary);">
+                <span>{% trans "Items Subtotal:" %}</span>
+                <span style="font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">₹{{ subtotal }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: var(--color-text-secondary);">
+                <span>{% trans "Estimated Shipping:" %}</span>
+                <span>
+                    {% if shipping == 0 %}
+                    <span style="color: var(--color-success-600); font-weight: var(--font-weight-semibold);">{% trans "FREE" %}</span>
+                    {% else %}
+                    ₹{{ shipping }}
+                    {% endif %}
+                </span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: var(--color-text-secondary);">
+                <span>{% trans "Estimated Tax (5%):" %}</span>
+                <span>₹{{ tax }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-text-primary); border-top: 1px solid var(--color-border-primary); padding-top: var(--space-3); margin-top: var(--space-2);">
+                <span>{% trans "Order Total:" %}</span>
+                <span>₹{{ total }}</span>
+            </div>
+        </div>
+
+        <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-block btn-lg" style="background-color: var(--store-accent); color: var(--color-neutral-900); border: none; font-weight: var(--font-weight-bold); border-radius: var(--radius-lg);" id="btn-proceed-checkout">
+            {% trans "Proceed to Checkout" %}
+        </a>
+
+        <div style="margin-top: var(--space-4); text-align: center;">
+            <a href="{% url 'store:product_list' %}" style="font-size: var(--font-size-sm); color: var(--color-primary-600); text-decoration: none; font-weight: var(--font-weight-medium);">
+                ← {% trans "Continue Shopping" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- Empty Cart State -->
+<div class="card" style="padding: var(--space-10) var(--space-6); text-align: center; max-width: 600px; margin: 0 auto;">
+    <div style="width: 64px; height: 64px; border-radius: var(--radius-full); background-color: var(--color-warning-100); color: var(--color-warning-700); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+        <i data-lucide="shopping-cart" style="width: 32px; height: 32px;"></i>
+    </div>
+    <h2 style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0 0 var(--space-2) 0;">
+        {% trans "Your ShopSense Cart is empty" %}
+    </h2>
+    <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); max-width: 380px; margin: 0 auto var(--space-6);">
+        {% trans "Explore today's top deals, trending electronics, and fresh arrivals to fill your cart." %}
+    </p>
+    <a href="{% url 'store:product_list' %}" class="btn btn-primary btn-lg" style="background-color: var(--store-accent); color: var(--color-neutral-900); font-weight: var(--font-weight-bold); border-radius: var(--radius-lg); display: inline-flex; align-items: center; gap: var(--space-1-5);">
+        <i data-lucide="shopping-bag" style="width: 18px; height: 18px;"></i>
+        {% trans "Start Shopping" %}
+    </a>
+</div>
+{% endif %}
+{% endblock %}

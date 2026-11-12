@@ -1,0 +1,17 @@
+{% load i18n %}
+{# Reusable empty state component #}
+{# Usage: {% include 'storefront/partials/empty_state.html' with icon="package-search" title="No items" message="..." cta_url="..." cta_label="..." %} #}
+<div class="empty-state">
+    {% if icon %}
+    <i data-lucide="{{ icon }}" style="width: 64px; height: 64px; color: var(--color-text-muted); margin: 0 auto var(--space-4); opacity: 0.5;" aria-hidden="true"></i>
+    {% endif %}
+    {% if title %}
+    <h3 class="empty-state-title">{{ title }}</h3>
+    {% endif %}
+    {% if message %}
+    <p class="empty-state-message">{{ message }}</p>
+    {% endif %}
+    {% if cta_url and cta_label %}
+    <a href="{{ cta_url }}" class="btn btn-outline">{{ cta_label }}</a>
+    {% endif %}
+</div>

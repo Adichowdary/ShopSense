@@ -1,0 +1,56 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<div style="max-width: 600px; margin: var(--space-8) auto;">
+    <div class="data-table-card">
+        <div class="card-header" style="border-bottom: 1px solid var(--color-error-100); background-color: var(--color-error-50);">
+            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--color-error-100); color: var(--color-error-600); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i data-lucide="alert-triangle" style="width: 22px; height: 22px;" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <h2 class="card-title" style="color: var(--color-error-800); margin: 0;">{% trans "Confirm Product Deletion" %}</h2>
+                    <p style="margin: 2px 0 0 0; font-size: var(--font-size-xs); color: var(--color-error-700);">
+                        {% trans "This action cannot be undone. All related inventory and images will be permanently removed." %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div style="padding: var(--space-4); background-color: var(--color-bg-secondary); border-radius: var(--radius-md); margin-bottom: var(--space-6); border: 1px solid var(--color-border);">
+                <div style="font-weight: var(--font-weight-semibold); font-size: var(--font-size-lg); color: var(--color-text-primary); margin-bottom: var(--space-2);">
+                    {{ product.name }}
+                </div>
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: var(--space-2); font-size: var(--font-size-sm);">
+                    <span class="text-muted">{% trans "SKU:" %}</span>
+                    <span><code>{{ product.sku }}</code></span>
+
+                    <span class="text-muted">{% trans "Price:" %}</span>
+                    <span style="font-weight: var(--font-weight-medium);">₹{{ product.price }}</span>
+
+                    <span class="text-muted">{% trans "Vendor:" %}</span>
+                    <span>{{ product.vendor.business_name }}</span>
+
+                    <span class="text-muted">{% trans "Current Stock:" %}</span>
+                    <span>{{ product.inventory.quantity|default:0 }} units</span>
+                </div>
+            </div>
+
+            <form method="post" id="delete-form">
+                {% csrf_token %}
+                <div style="display: flex; gap: var(--space-3); justify-content: flex-end;">
+                    <a href="{% url 'dashboard:product_detail' product.pk %}" class="btn btn-outline">
+                        {% trans "Cancel, Keep Product" %}
+                    </a>
+                    <button type="submit" class="btn btn-danger" style="background-color: var(--color-error-600); color: white; border: none;" id="btn-confirm-delete">
+                        <i data-lucide="trash-2" class="btn-icon"></i>
+                        {% trans "Yes, Delete Product" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

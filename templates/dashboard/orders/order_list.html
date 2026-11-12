@@ -1,0 +1,210 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<!-- Stats Overview -->
+<div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+    <div class="metric-card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+        <div style="font-size: 0.875rem; color: var(--text-muted, #64748b); font-weight: 500;">{% trans "Total Orders" %}</div>
+        <div style="font-size: 1.75rem; font-weight: 700; color: var(--text-color, #0f172a); margin-top: 4px;">{{ metrics.total_count|default:"0" }}</div>
+    </div>
+    <div class="metric-card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+        <div style="font-size: 0.875rem; color: var(--text-muted, #64748b); font-weight: 500;">{% trans "Active / Processing" %}</div>
+        <div style="font-size: 1.75rem; font-weight: 700; color: #2563eb; margin-top: 4px;">
+            {{ metrics.confirmed_count|add:metrics.processing_count }}
+        </div>
+    </div>
+    <div class="metric-card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+        <div style="font-size: 0.875rem; color: var(--text-muted, #64748b); font-weight: 500;">{% trans "Shipped / In Transit" %}</div>
+        <div style="font-size: 1.75rem; font-weight: 700; color: #7c3aed; margin-top: 4px;">{{ metrics.shipped_count|default:"0" }}</div>
+    </div>
+    <div class="metric-card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+        <div style="font-size: 0.875rem; color: var(--text-muted, #64748b); font-weight: 500;">{% trans "Delivered" %}</div>
+        <div style="font-size: 1.75rem; font-weight: 700; color: #059669; margin-top: 4px;">{{ metrics.delivered_count|default:"0" }}</div>
+    </div>
+    <div class="metric-card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+        <div style="font-size: 0.875rem; color: var(--text-muted, #64748b); font-weight: 500;">{% trans "Marketplace Net Sales" %}</div>
+        <div style="font-size: 1.75rem; font-weight: 700; color: var(--text-color, #0f172a); margin-top: 4px;">₹{{ metrics.total_revenue|default:"0.00"|floatformat:2 }}</div>
+    </div>
+</div>
+
+<div class="data-table-card">
+    <div class="card-header">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+                <h2 class="card-title">{% trans "Orders Management" %}</h2>
+                <p style="font-size: 0.875rem; color: var(--text-muted, #64748b); margin-top: 2px;">
+                    {% trans "Monitor, filter, and control customer orders and vendor fulfillment status." %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="card-body" style="padding-top: var(--space-4); padding-bottom: 0;">
+            <form method="get" class="flex flex-wrap gap-3" style="align-items: flex-end;">
+                <div style="flex: 1; min-width: 240px;">
+                    <label for="id_search" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">{% trans "Search Orders" %}</label>
+                    <div class="input-group">
+                        <span class="input-group-text" aria-hidden="true">
+                            <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+                        </span>
+                        <input type="search" name="search" id="id_search" class="form-input" placeholder="{% trans 'Order #, customer name, email, phone...' %}" value="{{ search_query }}" autocomplete="off">
+                    </div>
+                </div>
+
+                <div style="min-width: 170px;">
+                    <label for="id_status" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">{% trans "Status" %}</label>
+                    <select name="status" id="id_status" class="form-select">
+                        <option value="">{% trans "All Statuses" %}</option>
+                        {% for code, label in status_choices %}
+                        <option value="{{ code }}" {% if current_status == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="min-width: 150px;">
+                    <label for="id_date_from" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">{% trans "From Date" %}</label>
+                    <input type="date" name="date_from" id="id_date_from" class="form-input" value="{{ date_from }}">
+                </div>
+
+                <div style="min-width: 150px;">
+                    <label for="id_date_to" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">{% trans "To Date" %}</label>
+                    <input type="date" name="date_to" id="id_date_to" class="form-input" value="{{ date_to }}">
+                </div>
+
+                <div style="display: flex; gap: var(--space-2); align-items: center;">
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="filter" style="width: 16px; height: 16px;"></i>
+                        {% trans "Filter" %}
+                    </button>
+                    {% if search_query or current_status or date_from or date_to %}
+                    <a href="{% url 'dashboard:order_list' %}" class="btn btn-outline">
+                        <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                        {% trans "Clear" %}
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table of Orders -->
+    <div class="table-responsive">
+        {% if orders %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>{% trans "Order" %}</th>
+                    <th>{% trans "Date" %}</th>
+                    <th>{% trans "Customer" %}</th>
+                    <th>{% trans "Items" %}</th>
+                    <th>{% trans "Total" %}</th>
+                    <th>{% trans "Payment" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th style="text-align: right;">{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>
+                        <a href="{% url 'dashboard:order_detail' order_number=order.order_number %}" style="font-weight: 600; color: var(--primary-600, #2563eb); text-decoration: none;">
+                            {{ order.order_number }}
+                        </a>
+                    </td>
+                    <td>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">{{ order.created_at|date:"M d, Y" }}</span>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ order.created_at|date:"h:i A" }}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 500;">{{ order.shipping_first_name }} {{ order.shipping_last_name }}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">{{ order.email }}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral">{{ order.items.count }} {% trans "item(s)" %}</span>
+                    </td>
+                    <td style="font-weight: 600;">
+                        ₹{{ order.total }}
+                    </td>
+                    <td>
+                        {% with order.payments.first as payment %}
+                            {% if payment %}
+                                <span class="badge {% if payment.status == 'COMPLETED' %}badge-success{% elif payment.status == 'PENDING' %}badge-warning{% else %}badge-danger{% endif %}">
+                                    {{ payment.get_method_display }} ({{ payment.get_status_display }})
+                                </span>
+                            {% else %}
+                                <span class="badge badge-neutral">{% trans "Pending" %}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% if order.status == 'PENDING' %}
+                            <span class="badge badge-warning">{% trans "Pending" %}</span>
+                        {% elif order.status == 'CONFIRMED' %}
+                            <span class="badge badge-info">{% trans "Confirmed" %}</span>
+                        {% elif order.status == 'PROCESSING' %}
+                            <span class="badge" style="background: rgba(124, 58, 237, 0.15); color: #7c3aed;">{% trans "Processing" %}</span>
+                        {% elif order.status == 'SHIPPED' %}
+                            <span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;">{% trans "Shipped" %}</span>
+                        {% elif order.status == 'DELIVERED' %}
+                            <span class="badge badge-success">{% trans "Delivered" %}</span>
+                        {% elif order.status == 'CANCELLED' %}
+                            <span class="badge badge-danger">{% trans "Cancelled" %}</span>
+                        {% elif order.status == 'REFUNDED' %}
+                            <span class="badge" style="background: rgba(100, 116, 139, 0.15); color: #475569;">{% trans "Refunded" %}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="{% url 'dashboard:order_detail' order_number=order.order_number %}" class="btn btn-sm btn-outline">
+                            <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                            {% trans "Manage" %}
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="text-align: center; padding: var(--space-8) var(--space-4);">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--surface-ground, #f1f5f9); display: inline-flex; align-items: center; justify-content: center; margin-bottom: var(--space-3); color: var(--text-muted);">
+                <i data-lucide="shopping-bag" style="width: 28px; height: 28px;"></i>
+            </div>
+            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: var(--space-1);">{% trans "No orders found" %}</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 400px; margin: 0 auto;">
+                {% if search_query or current_status or date_from or date_to %}
+                    {% trans "No orders match your filter criteria. Try adjusting your filters." %}
+                {% else %}
+                    {% trans "No customer orders have been placed in the marketplace yet." %}
+                {% endif %}
+            </p>
+            {% if search_query or current_status or date_from or date_to %}
+            <div style="margin-top: var(--space-4);">
+                <a href="{% url 'dashboard:order_list' %}" class="btn btn-outline">{% trans "Clear Filters" %}</a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination-wrapper" style="padding: var(--space-4); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color, #e2e8f0);">
+        <span style="font-size: 0.85rem; color: var(--text-muted);">
+            {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ paginator.num_pages }}
+        </span>
+        <div style="display: flex; gap: var(--space-2);">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-sm btn-outline">
+                {% trans "Previous" %}
+            </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-sm btn-outline">
+                {% trans "Next" %}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

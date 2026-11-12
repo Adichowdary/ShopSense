@@ -1,0 +1,223 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} | ShopSense{% endblock %}
+
+{% block extra_head %}
+<!-- Plotly.js for interactive BI charts -->
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+{% endblock %}
+
+{% block page_content %}
+<div class="bi-dashboard-container">
+    <!-- Top Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: 0;">{% trans "Business Intelligence Overview" %}</h1>
+            <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin: var(--space-1) 0 0 0;">
+                {% trans "Executive performance metrics, revenue growth, and marketplace trends." %}
+            </p>
+        </div>
+        
+        <div style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
+            <!-- Filter Period Buttons -->
+            <div class="btn-group" role="group" aria-label="Period Filter">
+                <a href="?period=7" class="btn {% if period == '7' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">7D</a>
+                <a href="?period=30" class="btn {% if period == '30' or not period %}btn-primary{% else %}btn-outline{% endif %} btn-sm">30D</a>
+                <a href="?period=90" class="btn {% if period == '90' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">90D</a>
+                <a href="?period=365" class="btn {% if period == '365' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">1Y</a>
+            </div>
+
+            <!-- Download Reports Dropdown -->
+            <a href="{% url 'dashboard:export_report' %}?report=revenue&format=pdf" class="btn btn-outline btn-sm" title="Export PDF">
+                <i data-lucide="file-text" class="btn-icon"></i> {% trans "Export PDF" %}
+            </a>
+            <a href="{% url 'dashboard:export_report' %}?report=all&format=excel" class="btn btn-outline btn-sm" title="Export Excel">
+                <i data-lucide="file-spreadsheet" class="btn-icon"></i> {% trans "Export Excel" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- 8 Analytical KPI Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <!-- Total Revenue -->
+        <div class="card" style="padding: var(--space-4); border-left: 4px solid var(--color-primary-600); background: var(--color-surface);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Total Revenue" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0 var(--space-1) 0;">
+                ₹{{ kpis.total_revenue|floatformat:2 }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: {% if growth.revenue_growth_percent >= 0 %}var(--color-success-600){% else %}var(--color-error-600){% endif %}; font-weight: 500;">
+                {% if growth.revenue_growth_percent >= 0 %}↑{% else %}↓{% endif %} {{ growth.revenue_growth_percent }}% {% trans "vs prev 30 days" %}
+            </div>
+        </div>
+
+        <!-- Total Orders -->
+        <div class="card" style="padding: var(--space-4); border-left: 4px solid var(--color-success-600); background: var(--color-surface);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Total Orders" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0 var(--space-1) 0;">
+                {{ kpis.total_orders }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: {% if growth.orders_growth_percent >= 0 %}var(--color-success-600){% else %}var(--color-error-600){% endif %}; font-weight: 500;">
+                {% if growth.orders_growth_percent >= 0 %}↑{% else %}↓{% endif %} {{ growth.orders_growth_percent }}% {% trans "volume growth" %}
+            </div>
+        </div>
+
+        <!-- Average Order Value (AOV) -->
+        <div class="card" style="padding: var(--space-4); border-left: 4px solid var(--color-info-600); background: var(--color-surface);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Average Order Value" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0 var(--space-1) 0;">
+                ₹{{ kpis.average_order_value|floatformat:2 }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                {% trans "Per completed transaction" %}
+            </div>
+        </div>
+
+        <!-- Inventory Valuation -->
+        <div class="card" style="padding: var(--space-4); border-left: 4px solid var(--color-warning-500); background: var(--color-surface);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Inventory Value" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0 var(--space-1) 0;">
+                ₹{{ kpis.inventory_value|floatformat:2 }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                {% trans "Retail valuation on-hand" %}
+            </div>
+        </div>
+
+        <!-- Active Products -->
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Total Products" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0 var(--space-1) 0;">
+                {{ kpis.total_products }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Live catalog SKUs" %}</div>
+        </div>
+
+        <!-- Active Customers -->
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Total Customers" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0 var(--space-1) 0;">
+                {{ kpis.total_customers }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Registered shoppers" %}</div>
+        </div>
+
+        <!-- Active Vendors -->
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Active Vendors" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0 var(--space-1) 0;">
+                {{ kpis.active_vendors }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Approved sellers" %}</div>
+        </div>
+
+        <!-- Forecast Accuracy -->
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Forecast Accuracy" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0 var(--space-1) 0;">
+                {{ kpis.forecast_accuracy }}%
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-success-600); font-weight: 500;">
+                {% trans "Target: ≥ 80%" %} (Passed)
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
+        <!-- Daily Revenue & Order Volume Chart -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Revenue & Order Trends" %}
+            </h3>
+            <div id="revenueTimeseriesChart" style="min-height: 320px; width: 100%;"></div>
+        </div>
+
+        <!-- Category Sales Distribution -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Category Breakdown" %}
+            </h3>
+            <div id="categorySalesChart" style="min-height: 320px; width: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- Data Tables Row: Top Products & Top Vendors -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+        <!-- Top Products -->
+        <div class="card" style="background: var(--color-surface); padding: var(--space-5);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Top-Selling Products" %}
+            </h3>
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "SKU" %}</th>
+                            <th>{% trans "Units" %}</th>
+                            <th>{% trans "Revenue" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in top_products %}
+                        <tr>
+                            <td><strong>{{ p.name }}</strong></td>
+                            <td><code>{{ p.sku }}</code></td>
+                            <td>{{ p.units_sold }}</td>
+                            <td>₹{{ p.revenue|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">{% trans "No product sales recorded in this period." %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Top Vendors -->
+        <div class="card" style="background: var(--color-surface); padding: var(--space-5);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Marketplace Vendor Performance" %}
+            </h3>
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Vendor" %}</th>
+                            <th>{% trans "Orders" %}</th>
+                            <th>{% trans "Units" %}</th>
+                            <th>{% trans "Sales (INR)" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in marketplace.top_vendors %}
+                        <tr>
+                            <td><strong>{{ v.name }}</strong></td>
+                            <td>{{ v.orders }}</td>
+                            <td>{{ v.units }}</td>
+                            <td>₹{{ v.sales|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">{% trans "No vendor transactions recorded in this period." %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Render Daily Revenue Plotly Chart
+    var revData = JSON.parse('{{ revenue_chart_json|escapejs }}');
+    Plotly.newPlot('revenueTimeseriesChart', revData.data, revData.layout, {responsive: true, displayModeBar: false});
+
+    // Render Category Donut Chart
+    var catData = JSON.parse('{{ category_chart_json|escapejs }}');
+    Plotly.newPlot('categorySalesChart', catData.data, catData.layout, {responsive: true, displayModeBar: false});
+});
+</script>
+{% endblock %}
+

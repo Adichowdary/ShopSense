@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{{ page_title|default:"My Orders" }} - ShopSense Vendor Portal{% endblock %}
+
+{% block body_class %}vendor-portal-page{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: var(--space-6) var(--space-4);">
+    <!-- Vendor Header Banner -->
+    <div style="background: var(--surface-card, #ffffff); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); padding: var(--space-5); margin-bottom: var(--space-6); box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4);">
+        <div style="display: flex; align-items: center; gap: var(--space-4);">
+            <div style="width: 50px; height: 50px; border-radius: var(--radius-md, 8px); background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.25rem;">
+                <i data-lucide="store" style="width: 28px; height: 28px;"></i>
+            </div>
+            <div>
+                <h1 style="font-size: 1.35rem; font-weight: 700; margin: 0; color: var(--text-color, #0f172a);">
+                    {{ user.vendor_profile.business_name }}
+                </h1>
+                <div style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin-top: 2px;">
+                    {% trans "Vendor ID" %}: <code>{{ user.vendor_profile.vendor_id }}</code> &bull; {% trans "Order Management & Fulfillment" %}
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+            <a href="{% url 'dashboard:product_list' %}" class="btn btn-outline btn-sm">
+                <i data-lucide="package" style="width: 14px; height: 14px;"></i>
+                {% trans "Manage Products" %}
+            </a>
+            <a href="{% url 'vendors:profile' %}" class="btn btn-outline btn-sm">
+                <i data-lucide="user" style="width: 14px; height: 14px;"></i>
+                {% trans "Vendor Profile" %}
+            </a>
+            <a href="{% url 'store:home' %}" class="btn btn-outline btn-sm" target="_blank">
+                <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
+                {% trans "Storefront" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Vendor KPI Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div class="card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">{% trans "Total Sold Items" %}</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-color); margin-top: 4px;">{{ metrics.total_items|default:"0" }}</div>
+        </div>
+        <div class="card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">{% trans "To Fulfill / Processing" %}</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: #2563eb; margin-top: 4px;">
+                {{ metrics.confirmed_items|add:metrics.processing_items }}
+            </div>
+        </div>
+        <div class="card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">{% trans "Shipped / In Transit" %}</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: #7c3aed; margin-top: 4px;">{{ metrics.shipped_items|default:"0" }}</div>
+        </div>
+        <div class="card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">{% trans "Delivered" %}</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: #059669; margin-top: 4px;">{{ metrics.delivered_items|default:"0" }}</div>
+        </div>
+        <div class="card" style="background: var(--surface-card, #ffffff); padding: var(--space-4); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">{% trans "Vendor Net Revenue" %}</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-color); margin-top: 4px;">₹{{ metrics.total_revenue|default:"0.00"|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    <!-- Filter & Table Card -->
+    <div class="card" style="background: var(--surface-card, #ffffff); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); box-shadow: var(--shadow-sm); overflow: hidden;">
+        <div style="padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-color, #e2e8f0);">
+            <h2 style="font-size: 1.15rem; font-weight: 600; margin: 0 0 var(--space-3) 0;">{% trans "Customer Orders Containing Your Items" %}</h2>
+
+            <form method="get" class="flex flex-wrap gap-3" style="align-items: flex-end;">
+                <div style="flex: 1; min-width: 220px;">
+                    <label for="id_search" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">{% trans "Search Orders" %}</label>
+                    <div class="input-group">
+                        <span class="input-group-text" aria-hidden="true">
+                            <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+                        </span>
+                        <input type="search" name="search" id="id_search" class="form-input" placeholder="{% trans 'Order number, customer name, city...' %}" value="{{ search_query }}">
+                    </div>
+                </div>
+
+                <div style="min-width: 170px;">
+                    <label for="id_status" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">{% trans "Item Fulfillment Status" %}</label>
+                    <select name="status" id="id_status" class="form-select">
+                        <option value="">{% trans "All Item Statuses" %}</option>
+                        {% for code, label in status_choices %}
+                        <option value="{{ code }}" {% if current_status == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="min-width: 140px;">
+                    <label for="id_date_from" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">{% trans "From" %}</label>
+                    <input type="date" name="date_from" id="id_date_from" class="form-input" value="{{ date_from }}">
+                </div>
+
+                <div style="min-width: 140px;">
+                    <label for="id_date_to" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">{% trans "To" %}</label>
+                    <input type="date" name="date_to" id="id_date_to" class="form-input" value="{{ date_to }}">
+                </div>
+
+                <div style="display: flex; gap: var(--space-2);">
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="filter" style="width: 14px; height: 14px;"></i>
+                        {% trans "Filter" %}
+                    </button>
+                    {% if search_query or current_status or date_from or date_to %}
+                    <a href="{% url 'vendors:order_list' %}" class="btn btn-outline">{% trans "Clear" %}</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            {% if orders %}
+            <table class="data-table" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>{% trans "Order" %}</th>
+                        <th>{% trans "Date" %}</th>
+                        <th>{% trans "Customer & Destination" %}</th>
+                        <th>{% trans "Your Items" %}</th>
+                        <th>{% trans "Your Subtotal" %}</th>
+                        <th style="text-align: right;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'vendors:order_detail' order_number=order.order_number %}" style="font-weight: 600; color: var(--primary-600, #2563eb); text-decoration: none;">
+                                {{ order.order_number }}
+                            </a>
+                        </td>
+                        <td>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">{{ order.created_at|date:"M d, Y" }}</span>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ order.created_at|date:"h:i A" }}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 500;">{{ order.shipping_first_name }} {{ order.shipping_last_name }}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ order.shipping_city }}, {{ order.shipping_state }}</div>
+                        </td>
+                        <td>
+                            <span class="badge badge-neutral">{{ order.vendor_items_count }} {% trans "unit(s)" %}</span>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                                {% for item in order.vendor_items_list %}
+                                    {{ item.product_name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td style="font-weight: 700; color: var(--text-color);">
+                            ₹{{ order.vendor_subtotal }}
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="{% url 'vendors:order_detail' order_number=order.order_number %}" class="btn btn-sm btn-primary">
+                                <i data-lucide="package-check" style="width: 14px; height: 14px;"></i>
+                                {% trans "Fulfill Order" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align: center; padding: var(--space-8) var(--space-4);">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: #f1f5f9; display: inline-flex; align-items: center; justify-content: center; margin-bottom: var(--space-3); color: #94a3b8;">
+                    <i data-lucide="package" style="width: 28px; height: 28px;"></i>
+                </div>
+                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: var(--space-1);">{% trans "No vendor orders found" %}</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 400px; margin: 0 auto;">
+                    {% if search_query or current_status or date_from or date_to %}
+                        {% trans "No orders match your filter criteria." %}
+                    {% else %}
+                        {% trans "You do not have any customer orders waiting for fulfillment yet." %}
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div style="padding: var(--space-4); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color, #e2e8f0);">
+            <span style="font-size: 0.85rem; color: var(--text-muted);">
+                {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ paginator.num_pages }}
+            </span>
+            <div style="display: flex; gap: var(--space-2);">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">{% trans "Previous" %}</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">{% trans "Next" %}</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

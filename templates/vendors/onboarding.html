@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Become a Vendor" %} - ShopSense{% endblock %}
+
+{% block body_class %}vendor-onboarding-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<link rel="stylesheet" href="{% static 'css/vendor-onboarding.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="onboarding-page">
+    <!-- Progress Header (sticky on scroll) -->
+    <header class="onboarding-progress-header" id="progressHeader" role="navigation" aria-label="Application progress">
+        <div class="progress-container">
+            <div class="progress-track" aria-hidden="true">
+                <div class="progress-fill" id="progressFill" style="width: 33.33%;"></div>
+            </div>
+            <ol class="progress-steps" role="list" aria-label="Application steps">
+                <li class="progress-step {% if current_step >= 1 %}active{% endif %}{% if current_step > 1 %}completed{% endif %}" data-step="1" role="listitem">
+                    <button type="button" class="step-circle" data-step="1" aria-label="{% trans 'Step 1: Business Info' %}" {% if current_step > 1 %}onclick="goToStep(1)"{% endif %}>
+                        <span class="step-number">1</span>
+                        <svg class="step-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                    <span class="step-label">{% trans "Business Info" %}</span>
+                </li>
+                <li class="progress-step {% if current_step >= 2 %}active{% endif %}{% if current_step > 2 %}completed{% endif %}" data-step="2" role="listitem">
+                    <button type="button" class="step-circle" data-step="2" aria-label="{% trans 'Step 2: Contact & Address' %}" {% if current_step > 2 %}onclick="goToStep(2)"{% endif %}>
+                        <span class="step-number">2</span>
+                        <svg class="step-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                    <span class="step-label">{% trans "Contact & Address" %}</span>
+                </li>
+                <li class="progress-step {% if current_step >= 3 %}active{% endif %}" data-step="3" role="listitem">
+                    <button type="button" class="step-circle" data-step="3" aria-label="{% trans 'Step 3: Review & Submit' %}">
+                        <span class="step-number">3</span>
+                        <svg class="step-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                    <span class="step-label">{% trans "Review & Submit" %}</span>
+                </li>
+            </ol>
+        </div>
+    </header>
+
+    <main class="onboarding-main">
+        <div class="onboarding-container">
+            <!-- Sidebar with benefits (desktop only) -->
+            <aside class="onboarding-sidebar" aria-hidden="true">
+                <div class="sidebar-content">
+                    <div class="sidebar-brand">
+                        <div class="sidebar-logo">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            </svg>
+                        </div>
+                        <h2>{% trans "Why Sell on ShopSense?" %}</h2>
+                    </div>
+                    <ul class="benefits-list">
+                        <li>
+                            <div class="benefit-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            </div>
+                            <div class="benefit-text">
+                                <h4>{% trans "Millions of Customers" %}</h4>
+                                <p>{% trans "Access a growing marketplace of active shoppers across India" %}</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="benefit-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            </div>
+                            <div class="benefit-text">
+                                <h4>{% trans "Secure Payments" %}</h4>
+                                <p>{% trans "Timely settlements with multiple payment options for buyers" %}</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="benefit-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                            </div>
+                            <div class="benefit-text">
+                                <h4>{% trans "Real-time Analytics" %}</h4>
+                                <p>{% trans "Track sales, inventory, and customer insights in your dashboard" %}</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="benefit-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            </div>
+                            <div class="benefit-text">
+                                <h4>{% trans "Dedicated Support" %}</h4>
+                                <p>{% trans "Our vendor success team is here to help you grow" %}</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="benefit-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            </div>
+                            <div class="benefit-text">
+                                <h4>{% trans "Low 10% Commission" %}</h4>
+                                <p>{% trans "Keep more of your earnings with transparent pricing" %}</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="benefit-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                            </div>
+                            <div class="benefit-text">
+                                <h4>{% trans "Easy Logistics" %}</h4>
+                                <p>{% trans "Integrated shipping partners for hassle-free delivery" %}</p>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="sidebar-trust">
+                        <div class="trust-badge">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <span>{% trans "SSL Secured & PCI Compliant" %}</span>
+                        </div>
+                        <div class="trust-stats">
+                            <span><strong>50,000+</strong> {% trans "Active Sellers" %}</span>
+                            <span><strong>₹500Cr+</strong> {% trans "GMV Processed" %}</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Form Area -->
+            <div class="onboarding-form-wrapper">
+                <!-- Step Indicator Mobile -->
+                <div class="mobile-step-indicator" aria-hidden="true">
+                    <span class="mobile-step-label">{% trans "Step" %} <span id="mobileStepNum">1</span> {% trans "of 3" %}</span>
+                    <div class="mobile-progress-bar">
+                        <div class="mobile-progress-fill" id="mobileProgressFill" style="width: 33.33%;"></div>
+                    </div>
+                </div>
+
+                <!-- Form Header -->
+                <header class="onboarding-header">
+                    <a href="{% url 'accounts:login' %}" class="back-link" aria-label="{% trans 'Back to login' %}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        <span>{% trans "Back" %}</span>
+                    </a>
+                    <div class="header-content">
+                        <div class="header-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            </svg>
+                        </div>
+                        <h1 id="stepTitle">{% trans "Business Information" %}</h1>
+                        <p id="stepDescription">{% trans "Tell us about your business to get started" %}</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="step-counter" aria-live="polite"><span id="currentStepNum">1</span> / 3</span>
+                    </div>
+                </header>
+
+                <!-- Alert Container -->
+                <div class="alert-container" id="alertContainer" role="alert" aria-live="polite">
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-error">
+                        <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        <div class="alert-content">
+                            {% for error in form.non_field_errors %}<p class="alert-message">{{ error }}</p>{% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Form -->
+                <form method="post" novalidate id="onboardingForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- STEP 1: Business Information -->
+                    <fieldset class="form-step" data-step="1" aria-labelledby="step1-title">
+                        <legend id="step1-title" class="visually-hidden">{% trans "Step 1: Business Information" %}</legend>
+
+                        <div class="form-section">
+                            <h3 class="section-title">{% trans "Business Details" %}</h3>
+
+                            <div class="form-group">
+                                <label for="{{ form.business_name.id_for_label }}" class="form-label">
+                                    {{ form.business_name.label }} <span class="required" aria-hidden="true">*</span>
+                                </label>
+                                {{ form.business_name }}
+                                {% if form.business_name.errors %}
+                                <div class="form-error" role="alert">{{ form.business_name.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.business_description.id_for_label }}" class="form-label">{{ form.business_description.label }}</label>
+                                {{ form.business_description }}
+                                {% if form.business_description.errors %}
+                                <div class="form-error" role="alert">{{ form.business_description.errors }}</div>
+                                {% endif %}
+                                <p class="form-hint">{% trans "Describe your business, products, and services (helps customers find you)" %}</p>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.website.id_for_label }}" class="form-label">{{ form.website.label }}</label>
+                                    {{ form.website }}
+                                    {% if form.website.errors %}
+                                    <div class="form-error" role="alert">{{ form.website.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.tax_id.id_for_label }}" class="form-label">{{ form.tax_id.label }} <span class="required" aria-hidden="true">*</span></label>
+                                    {{ form.tax_id }}
+                                    {% if form.tax_id.errors %}
+                                    <div class="form-error" role="alert">{{ form.tax_id.errors }}</div>
+                                    {% endif %}
+                                    <p class="form-hint">{% trans "GST/PAN number for tax compliance" %}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3 class="section-title">{% trans "Brand Assets (Optional)" %}</h3>
+                            <p class="section-description">{% trans "Upload your logo and banner to personalize your storefront. You can add these later." %}</p>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.logo.id_for_label }}" class="form-label">{{ form.logo.label }}</label>
+                                    <div class="file-upload" data-preview="logoPreview">
+                                        <input type="file" name="{{ form.logo.name }}" id="{{ form.logo.id_for_label }}" accept="image/*" class="form-file-input" {% if form.logo.value %}value="{{ form.logo.value }}"{% endif %}>
+                                        <div class="file-upload-placeholder" id="logoPlaceholder">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                            <span>{% trans "Upload Logo" %}</span>
+                                            <small>{% trans "PNG, JPG up to 5MB. Recommended: 200×200px" %}</small>
+                                        </div>
+                                        <div class="file-upload-preview" id="logoPreview" hidden>
+                                            <img src="" alt="{% trans 'Logo preview' %}">
+                                            <button type="button" class="remove-file" data-target="logo" aria-label="{% trans 'Remove logo' %}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                                        </div>
+                                    </div>
+                                    {% if form.logo.errors %}<div class="form-error" role="alert">{{ form.logo.errors }}</div>{% endif %}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.banner.id_for_label }}" class="form-label">{{ form.banner.label }}</label>
+                                    <div class="file-upload file-upload-banner" data-preview="bannerPreview">
+                                        <input type="file" name="{{ form.banner.name }}" id="{{ form.banner.id_for_label }}" accept="image/*" class="form-file-input" {% if form.banner.value %}value="{{ form.banner.value }}"{% endif %}>
+                                        <div class="file-upload-placeholder" id="bannerPlaceholder">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                            <span>{% trans "Upload Banner" %}</span>
+                                            <small>{% trans "PNG, JPG up to 5MB. Recommended: 1200×300px" %}</small>
+                                        </div>
+                                        <div class="file-upload-preview" id="bannerPreview" hidden>
+                                            <img src="" alt="{% trans 'Banner preview' %}">
+                                            <button type="button" class="remove-file" data-target="banner" aria-label="{% trans 'Remove banner' %}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                                        </div>
+                                    </div>
+                                    {% if form.banner.errors %}<div class="form-error" role="alert">{{ form.banner.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                <!-- STEP 2: Contact & Address -->
+                <fieldset class="form-step" data-step="2" aria-labelledby="step2-title" hidden>
+                    <legend id="step2-title" class="visually-hidden">{% trans "Step 2: Contact & Address" %}</legend>
+
+                    <div class="form-section">
+                        <h3 class="section-title">{% trans "Contact Information" %}</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="{{ form.contact_email.id_for_label }}" class="form-label">
+                                    {{ form.contact_email.label }} <span class="required" aria-hidden="true">*</span>
+                                </label>
+                                {{ form.contact_email }}
+                                {% if form.contact_email.errors %}
+                                <div class="form-error" role="alert">{{ form.contact_email.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.contact_phone.id_for_label }}" class="form-label">{{ form.contact_phone.label }}</label>
+                                {{ form.contact_phone }}
+                                {% if form.contact_phone.errors %}
+                                <div class="form-error" role="alert">{{ form.contact_phone.errors }}</div>
+                                {% endif %}
+                                <p class="form-hint">{% trans "Include country code (e.g., +91)" %}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="section-title">{% trans "Business Address" %}</h3>
+
+                        <div class="form-group">
+                            <label for="{{ form.business_address.id_for_label }}" class="form-label">
+                                {{ form.business_address.label }} <span class="required" aria-hidden="true">*</span>
+                            </label>
+                            {{ form.business_address }}
+                            {% if form.business_address.errors %}
+                            <div class="form-error" role="alert">{{ form.business_address.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="{{ form.city.id_for_label }}" class="form-label">
+                                    {{ form.city.label }} <span class="required" aria-hidden="true">*</span>
+                                </label>
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                <div class="form-error" role="alert">{{ form.city.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.state.id_for_label }}" class="form-label">
+                                    {{ form.state.label }} <span class="required" aria-hidden="true">*</span>
+                                </label>
+                                {{ form.state }}
+                                {% if form.state.errors %}
+                                <div class="form-error" role="alert">{{ form.state.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.postal_code.id_for_label }}" class="form-label">
+                                    {{ form.postal_code.label }} <span class="required" aria-hidden="true">*</span>
+                                </label>
+                                {{ form.postal_code }}
+                                {% if form.postal_code.errors %}
+                                <div class="form-error" role="alert">{{ form.postal_code.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.country.id_for_label }}" class="form-label">
+                                {{ form.country.label }} <span class="required" aria-hidden="true">*</span>
+                            </label>
+                            {{ form.country }}
+                            {% if form.country.errors %}
+                            <div class="form-error" role="alert">{{ form.country.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- STEP 3: Review & Submit -->
+                <fieldset class="form-step" data-step="3" aria-labelledby="step3-title" hidden>
+                    <legend id="step3-title" class="visually-hidden">{% trans "Step 3: Review & Submit" %}</legend>
+
+                    <div class="form-section">
+                        <h3 class="section-title">{% trans "Review Your Application" %}</h3>
+                        <p class="section-description">{% trans "Please verify all information before submitting. You can go back to any step to make changes." %}</p>
+
+                        <div class="review-sections" id="reviewContent">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="section-title">{% trans "Terms & Agreement" %}</h3>
+
+                        <div class="alert alert-primary">
+                            <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            <div class="alert-content">
+                                <div class="alert-title">{% trans "Important Information" %}</div>
+                                <ul class="alert-message" style="margin: var(--space-2) 0; padding-left: var(--space-4); font-size: var(--font-size-sm);">
+                                    <li>{% trans "Your application will be reviewed within 3-5 business days" %}</li>
+                                    <li>{% trans "You'll receive an email notification once a decision is made" %}</li>
+                                    <li>{% trans "Approved vendors get access to the vendor dashboard" %}</li>
+                                    <li>{% trans "Standard commission rate: 10% on each sale" %}</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" name="terms_agreed" id="termsAgreed" class="checkbox-input" required>
+                                <label for="termsAgreed" class="checkbox-label">
+                                    <span class="checkbox-box">
+                                        <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </span>
+                                    <span>{% trans "I agree to the " %}<a href="#" class="link">{% trans "Vendor Terms of Service" %}</a>{% trans " and " %}<a href="#" class="link">{% trans "Privacy Policy" %}</a>{% trans "." %}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" name="marketing_consent" id="marketingConsent" class="checkbox-input">
+                                <label for="marketingConsent" class="checkbox-label">
+                                    <span class="checkbox-box">
+                                        <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </span>
+                                    <span>{% trans "I'd like to receive tips, updates, and promotional emails from ShopSense" %}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- Navigation Buttons -->
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-ghost btn-lg prev-btn" id="prevBtn" hidden>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        <span>{% trans "Previous" %}</span>
+                    </button>
+                    <div class="nav-spacer"></div>
+                    <button type="button" class="btn btn-primary btn-lg next-btn" id="nextBtn">
+                        <span>{% trans "Next" %}</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg submit-btn" id="submitBtn" hidden>
+                        <span>{% trans "Submit Application" %}</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+
+                <!-- Save Draft -->
+                <div class="save-draft">
+                    <button type="button" class="btn btn-outline btn-sm" id="saveDraftBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        <span>{% trans "Save as Draft" %}</span>
+                    </button>
+                    <span class="draft-status" id="draftStatus" aria-live="polite"></span>
+                </div>
+            </form>
+
+            <!-- Footer -->
+            <footer class="onboarding-footer">
+                <p>{% trans "Already have an account?" %} <a href="{% url 'accounts:login' %}">{% trans "Sign in" %}</a></p>
+                <p class="footer-links">
+                    <a href="#">{% trans "Terms of Service" %}</a>
+                    <span aria-hidden="true">·</span>
+                    <a href="#">{% trans "Privacy Policy" %}</a>
+                    <span aria-hidden="true">·</span>
+                    <a href="#">{% trans "Contact Support" %}</a>
+                </p>
+            </footer>
+        </div>
+    </div>
+</main>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" id="successModal" hidden role="dialog" aria-modal="true" aria-labelledby="successTitle">
+    <div class="modal modal-success">
+        <div class="modal-content">
+            <div class="success-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <h2 id="successTitle">{% trans "Application Submitted!" %}</h2>
+            <p id="successMessage">{% trans "Your vendor application has been received. Your vendor ID is <strong>{{ vendor_id }}</strong>. We'll review your application and contact you at <strong>{{ email }}</strong> within 3-5 business days." %}</p>
+            <div class="success-actions">
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg">{% trans "Continue to Login" %}</a>
+                <a href="{% url 'vendors:onboarding' %}" class="btn btn-outline btn-lg">{% trans "Submit Another" %}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Exit Intent Modal -->
+<div class="modal-overlay" id="exitModal" hidden role="dialog" aria-modal="true" aria-labelledby="exitTitle">
+    <div class="modal modal-confirm">
+        <div class="modal-content">
+            <div class="modal-icon warning">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <h2 id="exitTitle">{% trans "Leave Application?" %}</h2>
+            <p>{% trans "Your progress will be saved as a draft. You can continue later from where you left off." %}</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="stayBtn">{% trans "Stay & Continue" %}</button>
+                <button type="button" class="btn btn-primary" id="leaveBtn">{% trans "Save & Exit" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/vendor-onboarding.js' %}"></script>
+{% endblock %}

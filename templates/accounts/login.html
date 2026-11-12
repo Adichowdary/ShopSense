@@ -1,0 +1,261 @@
+﻿{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Sign In - ShopSense" %}{% endblock %}
+
+{% block body_class %}login-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<link rel="stylesheet" href="{% static 'css/login-premium.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="login-bg" aria-hidden="true">
+    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    <div class="gradient-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+</div>
+
+<div id="loginConfig" hidden
+     data-register-url="{% url 'accounts:register' %}"
+     data-onboarding-url="{% url 'vendors:onboarding' %}"
+     data-login-url="{% url 'accounts:login' %}"></div>
+
+<main class="login-stage">
+
+    <!-- ======================= Portal / Role Selector ======================= -->
+    <section class="role-selector" id="roleSelector" aria-label="{% trans 'Choose your portal' %}">
+        <div class="authx-card role-card">
+            <header class="role-header">
+                <div class="role-logo">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                </div>
+                <h1 class="role-title">{% trans "ShopSense" %}</h1>
+                <p class="role-subtitle">{% trans "One account. Every portal. Choose how you'd like to continue." %}</p>
+            </header>
+
+            <div class="role-options" role="radiogroup" aria-label="{% trans 'Portal options' %}">
+                <button type="button" class="role-option" data-role="admin" role="radio" aria-checked="false">
+                    <span class="role-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                            <path d="M8 21h8"></path>
+                            <path d="M12 17v4"></path>
+                        </svg>
+                    </span>
+                    <span class="role-info">
+                        <span class="role-name">{% trans "Admin Dashboard" %}</span>
+                        <span class="role-desc">{% trans "Manage marketplace, vendors & analytics" %}</span>
+                    </span>
+                    <span class="role-arrow" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </span>
+                </button>
+
+                <button type="button" class="role-option" data-role="vendor" role="radio" aria-checked="false">
+                    <span class="role-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                    </span>
+                    <span class="role-info">
+                        <span class="role-name">{% trans "Vendor Portal" %}</span>
+                        <span class="role-desc">{% trans "Manage products, orders & inventory" %}</span>
+                    </span>
+                    <span class="role-arrow" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </span>
+                </button>
+
+                <button type="button" class="role-option" data-role="customer" role="radio" aria-checked="false">
+                    <span class="role-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </span>
+                    <span class="role-info">
+                        <span class="role-name">{% trans "Customer Login" %}</span>
+                        <span class="role-desc">{% trans "Shop, track orders & manage your account" %}</span>
+                    </span>
+                    <span class="role-arrow" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+
+            <p class="role-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                {% trans "Secured connection · Your credentials are encrypted end-to-end" %}
+            </p>
+        </div>
+    </section>
+
+    <!-- ============================ Login Form ============================ -->
+    <section class="login-panel" id="loginPanel" hidden>
+        <div class="authx-card login-card-x" id="loginCard">
+            <button type="button" class="back-btn" id="backBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>{% trans "Back to portal selection" %}</span>
+            </button>
+
+            <header class="login-header-x">
+                <div class="login-logo-x" id="loginLogo">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                </div>
+                <h2 class="login-title-x" id="loginTitle">{% trans "Welcome Back" %}</h2>
+                <p class="login-subtitle-x" id="loginSubtitle">{% trans "Sign in to continue" %}</p>
+            </header>
+
+            <div class="alert-container" id="alertContainer" role="alert" aria-live="polite">
+                {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    <svg class="alert-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div class="alert-content">
+                        {% for error in form.non_field_errors %}
+                        <p class="alert-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <form method="post" action="{% url 'accounts:login' %}" novalidate id="loginForm" autocomplete="on">
+                {% csrf_token %}
+
+                <div class="form-group floating-label" data-field="username">
+                    <label class="floating-label-text" for="{{ form.username.id_for_label }}">
+                        <span>{% trans "Email Address" %}</span>
+                    </label>
+                    {{ form.username }}
+                    <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    {% if form.username.errors %}
+                    <div class="field-error" role="alert">
+                        {% for error in form.username.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group floating-label" data-field="password">
+                    <label class="floating-label-text" for="{{ form.password.id_for_label }}">
+                        <span>{% trans "Password" %}</span>
+                    </label>
+                    {{ form.password }}
+                    <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <button type="button" class="password-toggle" id="passwordToggle" aria-label="{% trans 'Show password' %}" aria-pressed="false">
+                        <svg class="toggle-icon toggle-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg class="toggle-icon toggle-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </button>
+                    {% if form.password.errors %}
+                    <div class="field-error" role="alert">
+                        {% for error in form.password.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-row-x">
+                    <div class="form-check checkbox-animated">
+                        <input type="checkbox" name="remember" id="id_remember" class="form-checkbox-input">
+                        <label for="id_remember" class="form-check-label">
+                            <span class="checkbox-box" aria-hidden="true">
+                                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>{% trans "Remember me" %}</span>
+                        </label>
+                    </div>
+                    <a href="{% url 'accounts:password_reset' %}" class="forgot-password-x">{% trans "Forgot password?" %}</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg submit-btn-x" id="submitBtn">
+                    <span class="btn-content">
+                        <span class="btn-text">{% trans "Sign In" %}</span>
+                        <svg class="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </span>
+                    <span class="btn-spinner" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="9" stroke-opacity="0.25"></circle>
+                            <path d="M12 3a9 9 0 0 1 9 9" stroke-linecap="round"></path>
+                        </svg>
+                    </span>
+                </button>
+            </form>
+
+            <div class="divider-x"><span>{% trans "New to ShopSense?" %}</span></div>
+
+            <div class="login-footer-x">
+                <p id="footerText">
+                    {% trans "Don't have an account?" %}
+                    <a href="{% url 'accounts:register' %}" id="footerLink">{% trans "Create one" %}</a>
+                </p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- ============================ Success Modal ============================ -->
+<div class="modal-overlay" id="successModal" hidden role="dialog" aria-modal="true" aria-labelledby="successTitle">
+    <div class="success-modal">
+        <div class="success-ring">
+            <svg class="success-check" width="56" height="56" viewBox="0 0 52 52" aria-hidden="true">
+                <circle class="success-check-circle" cx="26" cy="26" r="24" fill="none" stroke-width="3"></circle>
+                <path class="success-check-mark" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M14 27l8 8 16-16"></path>
+            </svg>
+        </div>
+        <h2 id="successTitle">{% trans "You're signed in!" %}</h2>
+        <p id="successMessage">{% trans "Taking you to your dashboard..." %}</p>
+        <div class="loader-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/login-premium.js' %}"></script>
+{% endblock %}

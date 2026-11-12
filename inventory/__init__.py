@@ -1,0 +1,1 @@
+# ShopSense Inventory Management App

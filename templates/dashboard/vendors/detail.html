@@ -1,0 +1,215 @@
+﻿{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-6); flex-wrap: wrap; gap: var(--space-4);">
+    <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); flex-wrap: wrap;">
+            <div class="avatar avatar-lg" style="background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));">
+                {{ vendor.business_name|first|upper }}
+            </div>
+            <div>
+                <h2 class="section-title" style="margin: 0;">{{ vendor.business_name }}</h2>
+                <p style="margin: 0; color: var(--color-text-tertiary); display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+                    <code>{{ vendor.vendor_id }}</code>
+                    <span>•</span>
+                    <span>{{ vendor.user.get_full_name|default:vendor.user.email }}</span>
+                    <span class="badge {% if vendor.is_active %}badge-success{% else %}badge-neutral{% endif %} badge-dot" style="font-size: var(--font-size-xs);">
+                        {% if vendor.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                    </span>
+                    <span class="badge {% if vendor.is_verified %}badge-success{% else %}badge-warning{% endif %} badge-dot" style="font-size: var(--font-size-xs);">
+                        {% if vendor.is_verified %}{% trans "Verified" %}{% else %}{% trans "Pending" %}{% endif %}
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+        <a href="{% url 'dashboard:vendor_list' %}" class="btn btn-outline">
+            <svg class="btn-icon" data-lucide="arrow-left" aria-hidden="true"></svg>
+            {% trans "Back to List" %}
+        </a>
+        <button type="button" class="btn btn-ghost" data-copy="{{ vendor.vendor_id }}" data-tooltip="{% trans 'Copy Vendor ID' %}" aria-label="{% trans 'Copy Vendor ID' %}">
+            <svg data-lucide="copy" width="18" height="18" aria-hidden="true"></svg>
+        </button>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: var(--space-6);">
+    <!-- Vendor Info -->
+    <section class="data-table-card">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <h3 class="card-title">{% trans "Vendor Information" %}</h3>
+                <a href="{% url 'admin:vendors_vendorprofile_change' vendor.pk %}" class="btn btn-ghost btn-sm" target="_blank">
+                    <svg class="btn-icon" data-lucide="edit" aria-hidden="true"></svg>
+                    {% trans "Edit" %}
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <dl style="display: grid; grid-template-columns: 180px 1fr; gap: var(--space-4) var(--space-6);">
+                <dt class="text-muted">{% trans "Vendor ID" %}</dt>
+                <dd><code>{{ vendor.vendor_id }}</code> <button type="button" class="btn btn-ghost btn-sm" style="padding: 0; height: auto; margin-left: var(--space-2);" data-copy="{{ vendor.vendor_id }}" aria-label="{% trans 'Copy Vendor ID' %}"><svg data-lucide="copy" width="14" height="14"></svg></button></dd>
+
+                <dt class="text-muted">{% trans "Business Name" %}</dt>
+                <dd style="font-weight: var(--font-weight-medium);">{{ vendor.business_name }}</dd>
+
+                <dt class="text-muted">{% trans "Description" %}</dt>
+                <dd>{{ vendor.business_description|default:"—"|linebreaks }}</dd>
+
+                <dt class="text-muted">{% trans "Contact Email" %}</dt>
+                <dd><a href="mailto:{{ vendor.contact_email }}" class="text-link">{{ vendor.contact_email }}</a></dd>
+
+                <dt class="text-muted">{% trans "Contact Phone" %}</dt>
+                <dd>{{ vendor.contact_phone|default:"—" }}</dd>
+
+                <dt class="text-muted">{% trans "Address" %}</dt>
+                <dd>{{ vendor.business_address|default:"—"|linebreaks }}</dd>
+
+                <dt class="text-muted">{% trans "City" %}</dt>
+                <dd>{{ vendor.city|default:"—" }}</dd>
+
+                <dt class="text-muted">{% trans "State" %}</dt>
+                <dd>{{ vendor.state|default:"—" }}</dd>
+
+                <dt class="text-muted">{% trans "Postal Code" %}</dt>
+                <dd>{{ vendor.postal_code|default:"—" }}</dd>
+
+                <dt class="text-muted">{% trans "Country" %}</dt>
+                <dd>{{ vendor.country|default:"India" }}</dd>
+
+                <dt class="text-muted">{% trans "Tax ID (GST/PAN)" %}</dt>
+                <dd><code>{{ vendor.tax_id|default:"—" }}</code></dd>
+
+                <dt class="text-muted">{% trans "Website" %}</dt>
+                <dd>
+                    {% if vendor.website %}
+                    <a href="{{ vendor.website }}" target="_blank" rel="noopener" class="text-link">{{ vendor.website }}</a>
+                    {% else %}—{% endif %}
+                </dd>
+
+                <dt class="text-muted">{% trans "Owner" %}</dt>
+                <dd>
+                    <a href="{% url 'admin:accounts_user_change' vendor.user.pk %}" target="_blank" class="text-link">
+                        {{ vendor.user.get_full_name|default:vendor.user.email }}
+                    </a>
+                </dd>
+
+                <dt class="text-muted">{% trans "Commission Rate" %}</dt>
+                <dd style="font-weight: var(--font-weight-semibold);">{{ vendor.commission_rate }}%</dd>
+
+                <dt class="text-muted">{% trans "Created" %}</dt>
+                <dd>{{ vendor.created_at|date:"M d, Y H:i" }}</dd>
+
+                <dt class="text-muted">{% trans "Last Updated" %}</dt>
+                <dd>{{ vendor.updated_at|date:"M d, Y H:i" }}</dd>
+            </dl>
+        </div>
+    </section>
+
+    <!-- Stats & Actions -->
+    <section class="data-table-card">
+        <div class="card-header">
+            <h3 class="card-title">{% trans "Overview & Actions" %}</h3>
+        </div>
+        <div class="card-body">
+            <!-- Quick Stats -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+                <article class="stat-card stat-card-primary" style="padding: var(--space-4);">
+                    <div class="stat-icon primary">
+                        <svg data-lucide="package" aria-hidden="true"></svg>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ vendor.products.count|default:0 }}</div>
+                        <div class="stat-label">{% trans "Products" %}</div>
+                    </div>
+                </article>
+                <article class="stat-card stat-card-success" style="padding: var(--space-4);">
+                    <div class="stat-icon success">
+                        <svg data-lucide="shopping-cart" aria-hidden="true"></svg>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ vendor.orders.count|default:0 }}</div>
+                        <div class="stat-label">{% trans "Orders" %}</div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Quick Actions -->
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                <a href="{% url 'dashboard:vendor_list' %}" class="btn btn-outline btn-block">
+                    <svg class="btn-icon" data-lucide="arrow-left" aria-hidden="true"></svg>
+                    {% trans "Back to Vendor List" %}
+                </a>
+                <a href="{% url 'admin:vendors_vendorprofile_change' vendor.pk %}" class="btn btn-secondary btn-block" target="_blank">
+                    <svg class="btn-icon" data-lucide="edit" aria-hidden="true"></svg>
+                    {% trans "Edit in Admin" %}
+                </a>
+                <a href="{% url 'admin:accounts_user_change' vendor.user.pk %}" class="btn btn-outline btn-block" target="_blank">
+                    <svg class="btn-icon" data-lucide="user" aria-hidden="true"></svg>
+                    {% trans "Manage User Account" %}
+                </a>
+                <button type="button" class="btn btn-ghost btn-block" data-copy="{{ vendor.vendor_id }}">
+                    <svg class="btn-icon" data-lucide="copy" aria-hidden="true"></svg>
+                    {% trans "Copy Vendor ID" %}
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Audit Logs -->
+    <section class="data-table-card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+            <h3 class="card-title">{% trans "Audit Trail" %}</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <div class="table-container">
+                <table class="table" role="table">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 180px;">{% trans "Action" %}</th>
+                            <th scope="col">{% trans "Performed By" %}</th>
+                            <th scope="col">{% trans "Details" %}</th>
+                            <th scope="col" style="width: 160px;">{% trans "Time" %}</th>
+                            <th scope="col" style="width: 140px;">{% trans "IP Address" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in audit_logs %}
+                        <tr>
+                            <td>
+                                <span class="badge badge-neutral">{{ log.get_action_display }}</span>
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="avatar avatar-sm">{{ log.user.email|first|upper }}</div>
+                                    <span>{{ log.user.email|default:"System" }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if log.details %}
+                                <div style="font-family: var(--font-family-mono); font-size: var(--font-size-2xs); color: var(--color-text-tertiary); background-color: var(--color-bg-tertiary); padding: var(--space-2); border-radius: var(--radius-md); max-height: 100px; overflow: auto;">{{ log.details|json_script:"audit-details" }}</div>
+                                {% else %}—{% endif %}
+                            </td>
+                            <td class="text-muted">{{ log.created_at|date:"M d, Y H:i" }}</td>
+                            <td><code class="text-xs">{{ log.ip_address|default:"—" }}</code></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: var(--space-12);">
+                                <div class="empty-state" style="padding: 0;">
+                                    <svg class="empty-state-icon" data-lucide="activity" aria-hidden="true"></svg>
+                                    <h3 class="empty-state-title">{% trans "No Audit Logs" %}</h3>
+                                    <p class="empty-state-message">{% trans "Administrative actions for this vendor will be logged here." %}</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

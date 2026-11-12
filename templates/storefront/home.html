@@ -1,0 +1,100 @@
+{% extends 'storefront/base_storefront.html' %}
+{% load static i18n %}
+
+{% block storefront_content %}
+<!-- Promotional Hero Banner -->
+<div class="card card-elevated" style="background: linear-gradient(135deg, var(--color-primary-800), var(--color-primary-600)); border: none; border-radius: var(--radius-2xl); overflow: hidden; color: var(--color-neutral-0);">
+    <div class="container" style="padding: var(--space-10) var(--space-8);">
+        <span class="tag tag-primary" style="background-color: rgba(255,255,255,0.2); color: var(--color-neutral-0); font-size: var(--font-size-2xs); font-weight: 800; padding: var(--space-1) var(--space-3); border-radius: var(--radius-full); text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; margin-bottom: var(--space-3);">
+            {% trans "Grand Marketplace Festival" %}
+        </span>
+        <h1 style="font-size: var(--font-size-5xl); font-weight: var(--font-weight-extrabold); line-height: var(--line-height-tight); margin: 0 0 var(--space-4) 0; letter-spacing: -0.02em;">
+            {% trans "Upgrade Your World with Next-Gen Tech & Style" %}
+        </h1>
+        <p class="lead" style="color: var(--color-primary-100); margin: 0 0 var(--space-5) 0;">
+            {% trans "Discover genuine products from verified marketplace stores with free delivery and unbeatable discount offers." %}
+        </p>
+        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+            <a href="{% url 'store:product_list' %}" class="btn btn-primary btn-lg" style="background-color: rgba(255,255,255,0.2); color: var(--color-neutral-0); border-color: rgba(255,255,255,0.3);">
+                {% trans "Explore Catalog" %}
+            </a>
+            <a href="{% url 'store:product_list' %}?sort=featured" class="btn btn-outline btn-lg" style="border-color: rgba(255,255,255,0.3); color: var(--color-neutral-0);">
+                {% trans "Top Deals" %}
+            </a>
+        </div>
+    </div>
+    <div style="position: absolute; right: -40px; bottom: -60px; opacity: 0.1; font-size: 8rem; line-height: 1; pointer-events: none;">
+        🛍️
+    </div>
+</div>
+
+<!-- Category Highlights Grid -->
+{% if categories %}
+<section class="dashboard-section">
+    <div class="section-header">
+        <h2 class="section-title">{% trans "Shop by Category" %}</h2>
+        <a href="{% url 'store:product_list' %}" class="section-action">
+            {% trans "View All" %} <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+        </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--space-4);">
+        {% for cat in categories %}
+        <a href="{% url 'store:product_list' %}?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}" class="card" style="text-decoration: none; color: inherit; padding: var(--space-4) var(--space-2); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+            <div style="width: 48px; height: 48px; border-radius: var(--radius-full); background-color: var(--color-primary-50); color: var(--color-primary-600); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-2);">
+                <i data-lucide="tag" style="width: 20px; height: 20px;"></i>
+            </div>
+            <div style="font-weight: var(--font-weight-semibold); font-size: var(--font-size-sm); color: var(--color-text-primary);">{{ cat.name }}</div>
+            <div style="font-size: var(--font-size-2xs); color: var(--color-text-muted); margin-top: var(--space-0-5);">{{ cat.active_products_count }} {% trans "items" %}</div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Featured Products Section -->
+{% if featured_products %}
+<section class="dashboard-section">
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">{% trans "Featured Products" %}</h2>
+            <p style="margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm);">{% trans "Handpicked marketplace items with top ratings & exclusive deals" %}</p>
+        </div>
+        <a href="{% url 'store:product_list' %}?sort=featured" class="section-action">
+            {% trans "See More" %} <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+        </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-6);">
+        {% for product in featured_products %}
+        {% include 'storefront/partials/product_card.html' with product=product show_add_to_cart=True %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- New Arrivals Grid -->
+<section class="dashboard-section">
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">{% trans "New Arrivals" %}</h2>
+            <p style="margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm);">{% trans "Fresh products just listed in the marketplace" %}</p>
+        </div>
+        <a href="{% url 'store:product_list' %}?sort=newest" class="section-action">
+            {% trans "View Catalog" %} <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+        </a>
+    </div>
+
+    {% if new_arrivals %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-6);">
+        {% for product in new_arrivals %}
+        {% include 'storefront/partials/product_card.html' with product=product show_add_to_cart=True %}
+        {% endfor %}
+    </div>
+    {% else %}
+    {% trans "No Active Products Yet" as empty_title %}
+    {% trans "New items are arriving soon. Check back shortly!" as empty_message %}
+    {% include 'storefront/partials/empty_state.html' with icon="package-search" title=empty_title message=empty_message %}
+    {% endif %}
+</section>
+{% endblock %}

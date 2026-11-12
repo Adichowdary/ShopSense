@@ -1,0 +1,19 @@
+{% load i18n %}
+{# Reusable form field with label, input, and error display #}
+{# Usage: {% include 'partials/form_field.html' with field=form.field_name label="Label" %} #}
+<div class="form-group{% if field.errors %} has-error{% endif %}"{% if field.help_text or field.errors %} aria-describedby="{{ field.auto_id }}-help{{ forloop.counter }}"{% endif %}>
+    {% if label %}
+    <label class="form-label" for="{{ field.auto_id }}">{{ label }}{% if field.field.required %} <span class="required" aria-hidden="true">*</span>{% endif %}</label>
+    {% endif %}
+    {{ field }}
+    {% if field.errors %}
+    <div class="form-error" role="alert" id="{{ field.auto_id }}-error">
+        {% for error in field.errors %}
+        <span>{{ error }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if field.help_text %}
+    <div class="form-hint" id="{{ field.auto_id }}-help">{{ field.help_text }}</div>
+    {% endif %}
+</div>

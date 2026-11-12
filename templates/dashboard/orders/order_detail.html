@@ -1,0 +1,294 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<div style="margin-bottom: var(--space-4);">
+    <a href="{% url 'dashboard:order_list' %}" class="btn btn-sm btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+        {% trans "Back to Orders" %}
+    </a>
+</div>
+
+<!-- Order Header Banner -->
+<div class="card" style="background: var(--surface-card, #ffffff); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); padding: var(--space-5); margin-bottom: var(--space-6); box-shadow: var(--shadow-sm);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: gap; gap: var(--space-4);">
+        <div>
+            <div style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+                <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--text-color, #0f172a);">
+                    {% trans "Order" %} {{ order.order_number }}
+                </h1>
+                {% if order.status == 'PENDING' %}
+                    <span class="badge badge-warning" style="font-size: 0.85rem; padding: 4px 10px;">{% trans "Pending" %}</span>
+                {% elif order.status == 'CONFIRMED' %}
+                    <span class="badge badge-info" style="font-size: 0.85rem; padding: 4px 10px;">{% trans "Confirmed" %}</span>
+                {% elif order.status == 'PROCESSING' %}
+                    <span class="badge" style="background: rgba(124, 58, 237, 0.15); color: #7c3aed; font-size: 0.85rem; padding: 4px 10px;">{% trans "Processing" %}</span>
+                {% elif order.status == 'SHIPPED' %}
+                    <span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284c7; font-size: 0.85rem; padding: 4px 10px;">{% trans "Shipped" %}</span>
+                {% elif order.status == 'DELIVERED' %}
+                    <span class="badge badge-success" style="font-size: 0.85rem; padding: 4px 10px;">{% trans "Delivered" %}</span>
+                {% elif order.status == 'CANCELLED' %}
+                    <span class="badge badge-danger" style="font-size: 0.85rem; padding: 4px 10px;">{% trans "Cancelled" %}</span>
+                {% elif order.status == 'REFUNDED' %}
+                    <span class="badge" style="background: rgba(100, 116, 139, 0.15); color: #475569; font-size: 0.85rem; padding: 4px 10px;">{% trans "Refunded" %}</span>
+                {% endif %}
+            </div>
+            <div style="font-size: 0.875rem; color: var(--text-muted, #64748b); margin-top: 6px;">
+                {% trans "Placed on" %} {{ order.created_at|date:"F d, Y \a\\t h:i A" }}
+                {% if order.confirmed_at %} &bull; {% trans "Confirmed" %}: {{ order.confirmed_at|date:"M d, h:i A" }}{% endif %}
+                {% if order.shipped_at %} &bull; {% trans "Shipped" %}: {{ order.shipped_at|date:"M d, h:i A" }}{% endif %}
+                {% if order.delivered_at %} &bull; {% trans "Delivered" %}: {{ order.delivered_at|date:"M d, h:i A" }}{% endif %}
+            </div>
+        </div>
+
+        <!-- Status Transition Controller -->
+        <div style="background: var(--surface-ground, #f8fafc); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md, 8px); border: 1px solid var(--border-color, #e2e8f0); min-width: 320px;">
+            <div style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
+                {% trans "Admin Status Control" %}
+            </div>
+            <form method="post" action="{% url 'dashboard:order_status_update' order_number=order.order_number %}" style="display: flex; flex-direction: column; gap: 8px;">
+                {% csrf_token %}
+                <div style="display: flex; gap: 8px;">
+                    <select name="status" class="form-select" style="font-size: 0.875rem;" required>
+                        <option value="">{% trans "-- Select New Status --" %}</option>
+                        {% for code, label in status_choices %}
+                            <option value="{{ code }}" {% if order.status == code %}selected disabled{% elif code not in allowed_transitions %}style="color: #94a3b8;"{% endif %}>
+                                {{ label }} {% if order.status == code %}(Current){% elif code not in allowed_transitions %}(Restricted){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary" style="white-space: nowrap; font-size: 0.875rem;">
+                        {% trans "Update" %}
+                    </button>
+                </div>
+                <div>
+                    <input type="text" name="admin_notes" class="form-input" style="font-size: 0.8rem;" placeholder="{% trans 'Optional note for audit log...' %}">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Order Content Grid -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); align-items: start;">
+    <!-- Left Column: Items and Audit Trail -->
+    <div>
+        <!-- Order Items Card -->
+        <div class="card" style="background: var(--surface-card, #ffffff); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); padding: var(--space-5); margin-bottom: var(--space-6); box-shadow: var(--shadow-sm);">
+            <h2 style="font-size: 1.15rem; font-weight: 600; margin-bottom: var(--space-4); display: flex; align-items: center; justify-content: space-between;">
+                <span>{% trans "Order Items" %} ({{ items|length }})</span>
+            </h2>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "Vendor" %}</th>
+                            <th>{% trans "Unit Price" %}</th>
+                            <th>{% trans "Qty" %}</th>
+                            <th>{% trans "Total" %}</th>
+                            <th>{% trans "Fulfillment" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                    {% if item.product and item.product.images.first %}
+                                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product_name }}" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm, 6px); border: 1px solid var(--border-color);">
+                                    {% else %}
+                                    <div style="width: 44px; height: 44px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: #94a3b8;">
+                                        <i data-lucide="package" style="width: 20px; height: 20px;"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <div style="font-weight: 600;">{{ item.product_name }}</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted);">SKU: {{ item.product_sku }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if item.vendor %}
+                                    <a href="{% url 'dashboard:vendor_detail' pk=item.vendor.pk %}" style="font-weight: 500; font-size: 0.85rem; color: var(--primary-600); text-decoration: none;">
+                                        {{ item.vendor.business_name }}
+                                    </a>
+                                {% else %}
+                                    <span style="font-size: 0.85rem; color: var(--text-muted);">{% trans "Direct Marketplace" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>₹{{ item.unit_price }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td style="font-weight: 600;">₹{{ item.total_price }}</td>
+                            <td>
+                                {% if item.status == 'PENDING' %}
+                                    <span class="badge badge-warning">{% trans "Pending" %}</span>
+                                {% elif item.status == 'CONFIRMED' %}
+                                    <span class="badge badge-info">{% trans "Confirmed" %}</span>
+                                {% elif item.status == 'PROCESSING' %}
+                                    <span class="badge" style="background: rgba(124, 58, 237, 0.15); color: #7c3aed;">{% trans "Processing" %}</span>
+                                {% elif item.status == 'SHIPPED' %}
+                                    <span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;">{% trans "Shipped" %}</span>
+                                {% elif item.status == 'DELIVERED' %}
+                                    <span class="badge badge-success">{% trans "Delivered" %}</span>
+                                {% elif item.status == 'CANCELLED' %}
+                                    <span class="badge badge-danger">{% trans "Cancelled" %}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Financial Summary Box -->
+            <div style="margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--border-color, #e2e8f0); display: flex; justify-content: flex-end;">
+                <div style="min-width: 260px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">{% trans "Subtotal" %}</span>
+                        <span>₹{{ order.subtotal }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">{% trans "Shipping Fee" %}</span>
+                        <span>{% if order.shipping_cost == 0 %}<span style="color: #059669;">{% trans "FREE" %}</span>{% else %}₹{{ order.shipping_cost }}{% endif %}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">{% trans "Estimated Tax (5%)" %}</span>
+                        <span>₹{{ order.tax_amount }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px dashed var(--border-color); font-weight: 700; font-size: 1.15rem; color: var(--text-color);">
+                        <span>{% trans "Grand Total" %}</span>
+                        <span>₹{{ order.total }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Trail Card -->
+        <div class="card" style="background: var(--surface-card, #ffffff); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); padding: var(--space-5); box-shadow: var(--shadow-sm);">
+            <h2 style="font-size: 1.15rem; font-weight: 600; margin-bottom: var(--space-4); display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="shield-check" style="width: 20px; height: 20px; color: var(--primary-600);"></i>
+                {% trans "Order Security Audit Trail" %}
+            </h2>
+
+            {% if audit_logs %}
+            <div style="position: relative; padding-left: 20px; border-left: 2px solid var(--border-color, #e2e8f0); margin-left: 10px;">
+                {% for log in audit_logs %}
+                <div style="margin-bottom: var(--space-4); position: relative;">
+                    <div style="position: absolute; left: -26px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary-600);"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <div style="font-weight: 600; font-size: 0.9rem;">{{ log.get_action_display }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ log.created_at|date:"M d, Y h:i A" }}</div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                        {% trans "Performed by" %}: <strong>{{ log.user.get_full_name|default:log.user.email|default:"System" }}</strong>
+                        {% if log.ip_address %} &bull; IP: {{ log.ip_address }}{% endif %}
+                    </div>
+                    {% if log.details %}
+                    <div style="background: var(--surface-ground, #f8fafc); border-radius: 6px; padding: 6px 10px; margin-top: 4px; font-size: 0.8rem; color: var(--text-color);">
+                        {% if log.details.old_status and log.details.new_status %}
+                            <span>Transition: <code>{{ log.details.old_status }}</code> &rarr; <code>{{ log.details.new_status }}</code></span>
+                        {% endif %}
+                        {% if log.details.notes %}
+                            <div style="font-style: italic; margin-top: 2px;">"{{ log.details.notes }}"</div>
+                        {% endif %}
+                        {% if log.details.product_name %}
+                            <div>{% trans "Item" %}: {{ log.details.product_name }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color: var(--text-muted); font-size: 0.875rem;">
+                {% trans "No audit log entries recorded for this order yet." %}
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Customer, Shipping, Payment Details -->
+    <div>
+        <!-- Customer Details -->
+        <div class="card" style="background: var(--surface-card, #ffffff); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); padding: var(--space-4); margin-bottom: var(--space-5); box-shadow: var(--shadow-sm);">
+            <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-3);">
+                {% trans "Customer Information" %}
+            </h3>
+            <div style="font-weight: 600; font-size: 1rem;">{{ order.shipping_first_name }} {{ order.shipping_last_name }}</div>
+            <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">{{ order.email }}</div>
+            {% if order.phone %}
+            <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 2px;">{{ order.phone }}</div>
+            {% endif %}
+            {% if order.user %}
+            <div style="margin-top: 10px; font-size: 0.8rem;">
+                <span class="badge badge-info">{% trans "Registered Customer" %}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Shipping Destination -->
+        <div class="card" style="background: var(--surface-card, #ffffff); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); padding: var(--space-4); margin-bottom: var(--space-5); box-shadow: var(--shadow-sm);">
+            <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-3);">
+                {% trans "Shipping Address" %}
+            </h3>
+            <div style="font-size: 0.9rem; line-height: 1.5; color: var(--text-color);">
+                <div>{{ order.shipping_address }}</div>
+                <div>{{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}</div>
+                <div>{{ order.shipping_country }}</div>
+            </div>
+        </div>
+
+        <!-- Payment Record -->
+        <div class="card" style="background: var(--surface-card, #ffffff); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); padding: var(--space-4); margin-bottom: var(--space-5); box-shadow: var(--shadow-sm);">
+            <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-3);">
+                {% trans "Payment Information" %}
+            </h3>
+            {% if payments %}
+                {% for payment in payments %}
+                <div style="margin-bottom: var(--space-2); padding-bottom: var(--space-2); {% if not forloop.last %}border-bottom: 1px dashed var(--border-color);{% endif %}">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; font-size: 0.9rem;">{{ payment.get_method_display }}</span>
+                        <span class="badge {% if payment.status == 'COMPLETED' %}badge-success{% elif payment.status == 'PENDING' %}badge-warning{% else %}badge-danger{% endif %}">
+                            {{ payment.get_status_display }}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+                        ID: {{ payment.payment_id }}
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                        Amount: ₹{{ payment.amount }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="color: var(--text-muted); font-size: 0.85rem;">
+                    {% trans "No payment transaction recorded." %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Notes Card -->
+        {% if order.customer_notes or order.admin_notes %}
+        <div class="card" style="background: var(--surface-card, #ffffff); border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color, #e2e8f0); padding: var(--space-4); box-shadow: var(--shadow-sm);">
+            <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-3);">
+                {% trans "Notes & Remarks" %}
+            </h3>
+            {% if order.customer_notes %}
+            <div style="margin-bottom: var(--space-3);">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">{% trans "Customer Note" %}</span>
+                <p style="font-size: 0.85rem; margin-top: 2px;">{{ order.customer_notes }}</p>
+            </div>
+            {% endif %}
+            {% if order.admin_notes %}
+            <div>
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">{% trans "Admin Internal Notes" %}</span>
+                <pre style="font-size: 0.8rem; background: var(--surface-ground); padding: 8px; border-radius: 6px; white-space: pre-wrap; margin-top: 2px;">{{ order.admin_notes }}</pre>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

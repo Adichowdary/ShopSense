@@ -1,0 +1,159 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} | ShopSense{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+{% endblock %}
+
+{% block page_content %}
+<div class="bi-dashboard-container">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: 0;">{% trans "Inventory Intelligence & Health" %}</h1>
+            <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin: var(--space-1) 0 0 0;">
+                {% trans "Stock distribution, inventory turnover, stockout risk indicators, and replenishment queue." %}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'dashboard:export_report' %}?report=inventory&format=pdf" class="btn btn-outline btn-sm">
+                <i data-lucide="file-text" class="btn-icon"></i> {% trans "Export Inventory Report (PDF)" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Stock KPI Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-success-600);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Available Stock" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                {{ kpis.available_stock }} <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: normal;">units</span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Ready for immediate customer orders" %}</div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-warning-500);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Reserved Stock" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                {{ kpis.reserved_stock }} <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: normal;">units</span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Allocated to open unfulfilled orders" %}</div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-error-600);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Stockout & Low Alerts" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                {{ kpis.low_stock_count }} <span style="font-size: var(--font-size-xs); color: var(--color-error-600); font-weight: normal;">low</span> / {{ kpis.out_of_stock_count }} <span style="font-size: var(--font-size-xs); color: var(--color-error-600); font-weight: normal;">OOS</span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Require immediate vendor replenishment" %}</div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-info-600);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Inventory Turnover" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                {{ kpis.turnover_ratio }}x
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "30-day velocity metric" %}</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Stock Allocation Distribution" %}
+            </h3>
+            <div id="stockDonutChart" style="min-height: 280px; width: 100%;"></div>
+        </div>
+
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Stock Movements by Type (30 Days)" %}
+            </h3>
+            <div id="movementBarChart" style="min-height: 280px; width: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- Tables Row: Risk Indicators & Replenishment Suggestions -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+        <!-- Risk Indicators -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Inventory Risk Indicators" %}
+            </h3>
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "SKU" %}</th>
+                            <th>{% trans "Stock" %}</th>
+                            <th>{% trans "Status" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in kpis.risk_indicators %}
+                        <tr>
+                            <td><strong>{{ r.name }}</strong></td>
+                            <td><code>{{ r.sku }}</code></td>
+                            <td>{{ r.stock }}</td>
+                            <td>
+                                <span class="badge {% if r.stock <= 0 %}badge-danger{% else %}badge-warning{% endif %}">
+                                    {{ r.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">{% trans "All products maintain healthy stock levels." %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Replenishment Suggestions -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Automated Replenishment Suggestions" %}
+            </h3>
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "SKU" %}</th>
+                            <th>{% trans "Current" %}</th>
+                            <th>{% trans "Reorder Pt" %}</th>
+                            <th>{% trans "Suggested Order" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rep in kpis.replenishment_suggestions %}
+                        <tr>
+                            <td><strong>{{ rep.sku }}</strong><br><small class="text-muted">{{ rep.product_name }}</small></td>
+                            <td>{{ rep.observed_stock }}</td>
+                            <td>{{ rep.reorder_point }}</td>
+                            <td><strong style="color: var(--color-primary-600);">+{{ rep.suggested_quantity }} units</strong></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">{% trans "No replenishment requests currently pending." %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var donutData = JSON.parse('{{ stock_donut_json|escapejs }}');
+    Plotly.newPlot('stockDonutChart', donutData.data, donutData.layout, {responsive: true, displayModeBar: false});
+
+    var moveData = JSON.parse('{{ movement_chart_json|escapejs }}');
+    Plotly.newPlot('movementBarChart', moveData.data, moveData.layout, {responsive: true, displayModeBar: false});
+});
+</script>
+{% endblock %}
+

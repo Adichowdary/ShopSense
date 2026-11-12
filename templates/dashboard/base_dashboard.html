@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{{ page_title|default:"Dashboard" }} - ShopSense Admin{% endblock %}
+
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Skip to content -->
+<a href="#mainContent" class="sr-only focus:not-sr-only">{% trans "Skip to main content" %}</a>
+
+<!-- Sidebar Overlay (Mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sidebar-header">
+        <a href="{% url 'dashboard:admin_dashboard' %}" class="sidebar-logo" aria-label="ShopSense Admin Home">
+            <div class="sidebar-logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+            </div>
+            <span class="sidebar-logo-text">ShopSense</span>
+        </a>
+        <button class="sidebar-toggle" id="sidebarCollapseBtn" aria-label="Collapse sidebar" aria-expanded="false">
+            <i data-lucide="chevron-left" class="nav-icon"></i>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Sidebar navigation">
+        <div class="nav-section">
+            <h3 class="nav-section-title">{% trans "Main" %}</h3>
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" aria-current="{% if request.resolver_match.url_name == 'admin_dashboard' %}page{% endif %}">
+                        <i data-lucide="layout-dashboard" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Dashboard" %}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <h3 class="nav-section-title">{% trans "Marketplace" %}</h3>
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:vendor_applications' %}" class="nav-link {% if 'vendor_application' in request.resolver_match.url_name %}active{% endif %}">
+                        <i data-lucide="users" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Vendors" %}</span>
+                        {% if vendor_stats.pending > 0 %}
+                        <span class="nav-badge badge-warning">{{ vendor_stats.pending }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:vendor_list' %}" class="nav-link {% if 'vendor_list' in request.resolver_match.url_name or 'vendor_detail' in request.resolver_match.url_name %}active{% endif %}">
+                        <i data-lucide="store" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Vendor Profiles" %}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:product_list' %}" class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+                        <i data-lucide="package" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Products" %}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link disabled" aria-disabled="true">
+                        <i data-lucide="tag" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Categories" %}</span>
+                        <i data-lucide="lock" class="nav-icon" style="margin-left: auto; width: 14px; height: 14px;" aria-hidden="true"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <h3 class="nav-section-title">{% trans "Operations" %}</h3>
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:order_list' %}" class="nav-link {% if 'order' in request.resolver_match.url_name %}active{% endif %}">
+                        <i data-lucide="shopping-cart" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Orders" %}</span>
+                    </a>
+                </li>
+                {% if user.can_access_admin_dashboard %}
+                <li class="nav-item">
+                    <a href="{% url 'inventory:admin_overview' %}" class="nav-link {% if 'admin_overview' in request.resolver_match.url_name %}active{% endif %}">
+                        <i data-lucide="boxes" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Inventory & Intelligence" %}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:transfer_list' %}" class="nav-link {% if 'transfer' in request.resolver_match.url_name %}active{% endif %}">
+                        <i data-lucide="arrow-right-left" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Transfers" %}</span>
+                    </a>
+                </li>
+                {% elif user.is_vendor %}
+                <li class="nav-item">
+                    <a href="{% url 'inventory:vendor_overview' %}" class="nav-link {% if 'vendor_overview' in request.resolver_match.url_name %}active{% endif %}">
+                        <i data-lucide="boxes" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Stock & Alerts" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <h3 class="nav-section-title">{% trans "Analytics & Intelligence" %}</h3>
+            <ul class="nav-list">
+                {% if user.can_access_admin_dashboard %}
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:bi_overview' %}" class="nav-link {% if request.resolver_match.url_name == 'bi_overview' %}active{% endif %}">
+                        <i data-lucide="line-chart" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "BI Overview" %}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:bi_customers' %}" class="nav-link {% if request.resolver_match.url_name == 'bi_customers' %}active{% endif %}">
+                        <i data-lucide="users-2" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Customer Intel" %}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:bi_inventory' %}" class="nav-link {% if request.resolver_match.url_name == 'bi_inventory' %}active{% endif %}">
+                        <i data-lucide="layers" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Inventory Intel" %}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:bi_recommendations' %}" class="nav-link {% if request.resolver_match.url_name == 'bi_recommendations' %}active{% endif %}">
+                        <i data-lucide="sparkles" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Recommendations" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:admin_reports' %}" class="nav-link {% if 'admin_reports' in request.resolver_match.url_name %}active{% endif %}">
+                        <i data-lucide="bar-chart-2" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Reports" %}</span>
+                    </a>
+                </li>
+                {% if user.can_access_admin_dashboard %}
+                <li class="nav-item">
+                    <a href="{% url 'inventory:admin_overview' %}" class="nav-link">
+                        <i data-lucide="trending-up" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Forecasting & RFM" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <h3 class="nav-section-title">{% trans "Settings" %}</h3>
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:admin_settings' %}" class="nav-link {% if 'admin_settings' in request.resolver_match.url_name %}active{% endif %}">
+                        <i data-lucide="settings" class="nav-icon" aria-hidden="true"></i>
+                        <span class="nav-text">{% trans "Settings" %}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-menu">
+            <div class="user-avatar">
+                <div class="avatar avatar-sm">
+                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="user-name">{{ user.get_full_name|default:user.email }}</div>
+                <div class="user-role">{{ user.get_role_display }}</div>
+            </div>
+            <a href="{% url 'accounts:logout' %}" class="header-action-btn" aria-label="Log out">
+                <i data-lucide="log-out" class="nav-icon" aria-hidden="true"></i>
+            </a>
+        </div>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main-content" id="mainContent" role="main">
+    <!-- Header -->
+    <header class="header" role="banner">
+        <div class="header-left">
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">
+                <i data-lucide="menu" class="nav-icon" aria-hidden="true"></i>
+            </button>
+            <h1 class="page-title">{{ page_title|default:"Dashboard" }}</h1>
+        </div>
+
+        <div class="header-right">
+            <!-- Search -->
+            <div class="header-search" role="search">
+                <i data-lucide="search" class="header-search-icon" aria-hidden="true"></i>
+                <input type="search" class="header-search-input" placeholder="Search vendors, orders, products..." aria-label="Search">
+            </div>
+
+            <!-- Theme Toggle -->
+            <button class="header-action-btn" id="theme-toggle" aria-label="Toggle theme" aria-pressed="false">
+                <i data-lucide="moon" class="nav-icon" aria-hidden="true"></i>
+            </button>
+
+            <!-- Notifications -->
+            <button class="header-action-btn" aria-label="Notifications">
+                <i data-lucide="bell" class="nav-icon" aria-hidden="true"></i>
+                <span class="notification-badge">3</span>
+            </button>
+
+            <!-- User Menu Dropdown -->
+            <div class="user-menu-dropdown">
+                <button class="user-menu-trigger" aria-label="User menu" aria-expanded="false" aria-haspopup="true">
+                    <div class="avatar avatar-sm user-menu-avatar">
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                    <span class="user-menu-name">{{ user.get_full_name|default:user.email }}</span>
+                    <i data-lucide="chevron-down" class="user-menu-chevron" aria-hidden="true"></i>
+                </button>
+                <div class="user-menu-panel" role="menu">
+                    <div class="user-menu-panel-header">
+                        <div class="user-menu-panel-name">{{ user.get_full_name|default:user.email }}</div>
+                        <div class="user-menu-panel-email">{{ user.email }}</div>
+                    </div>
+                    <div class="user-menu-panel-divider"></div>
+                    <a href="{% url 'accounts:profile' %}" class="user-menu-panel-item" role="menuitem">
+                        <i data-lucide="user" aria-hidden="true"></i>
+                        <span>{% trans "Profile" %}</span>
+                    </a>
+                    <a href="{% url 'accounts:password_change' %}" class="user-menu-panel-item" role="menuitem">
+                        <i data-lucide="lock" aria-hidden="true"></i>
+                        <span>{% trans "Change Password" %}</span>
+                    </a>
+                    <a href="{% url 'dashboard:admin_settings' %}" class="user-menu-panel-item" role="menuitem">
+                        <i data-lucide="settings" aria-hidden="true"></i>
+                        <span>{% trans "Settings" %}</span>
+                    </a>
+                    <div class="user-menu-panel-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="user-menu-panel-item error" role="menuitem">
+                        <i data-lucide="log-out" aria-hidden="true"></i>
+                        <span>{% trans "Log Out" %}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+        {% block page_content %}
+        {% endblock %}
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+        const mainContent = document.getElementById('mainContent');
+
+        // Mobile menu
+        if (mobileMenuToggle && sidebar && sidebarOverlay) {
+            mobileMenuToggle.addEventListener('click', function() {
+                const isOpen = sidebar.classList.toggle('open');
+                sidebarOverlay.classList.toggle('show', isOpen);
+                mobileMenuToggle.setAttribute('aria-expanded', isOpen);
+                mobileMenuToggle.innerHTML = isOpen
+                    ? '<i data-lucide="x" class="nav-icon" aria-hidden="true"></i>'
+                    : '<i data-lucide="menu" class="nav-icon" aria-hidden="true"></i>';
+                lucide.createIcons();
+            });
+
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('show');
+                mobileMenuToggle.setAttribute('aria-expanded', 'false');
+                mobileMenuToggle.innerHTML = '<i data-lucide="menu" class="nav-icon" aria-hidden="true"></i>';
+                lucide.createIcons();
+            });
+        }
+
+        // Sidebar collapse (desktop)
+        if (sidebarCollapseBtn && sidebar) {
+            sidebarCollapseBtn.addEventListener('click', function() {
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                sidebarCollapseBtn.setAttribute('aria-expanded', !isCollapsed);
+                const icon = this.querySelector('i');
+                if (icon) {
+                    icon.setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
+                }
+                lucide.createIcons();
+            });
+        }
+
+        // Keyboard navigation for sidebar
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('show');
+                mobileMenuToggle.setAttribute('aria-expanded', 'false');
+                mobileMenuToggle.innerHTML = '<i data-lucide="menu" class="nav-icon" aria-hidden="true"></i>';
+                lucide.createIcons();
+            }
+        });
+    });
+</script>
+{% endblock %}

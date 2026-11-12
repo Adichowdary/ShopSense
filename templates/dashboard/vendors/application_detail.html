@@ -1,0 +1,380 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/vendor-admin.css' %}">
+{% endblock %}
+
+{% block page_content %}
+<!-- Breadcrumb & Top Bar -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+    <div style="display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+        <a href="{% url 'dashboard:vendor_applications' %}" class="hover:underline" style="color: var(--color-primary-600); font-weight: 500;">
+            {% trans "Vendor Applications" %}
+        </a>
+        <span>/</span>
+        <span style="font-weight: 600; color: var(--color-text-primary);">{{ application.business_name }}</span>
+    </div>
+    <a href="{% url 'dashboard:vendor_applications' %}" class="btn btn-outline btn-sm">
+        <i data-lucide="arrow-left" class="btn-icon"></i>
+        {% trans "Back to All Applications" %}
+    </a>
+</div>
+
+<!-- Vendor Hero Summary Header -->
+<div class="va-detail-hero">
+    <div class="va-detail-hero-left">
+        <div class="va-detail-logo">
+            {% if application.logo %}
+            <img src="{{ application.logo.url }}" alt="{{ application.business_name }}">
+            {% else %}
+            <span>{{ application.business_name|slice:":2"|upper }}</span>
+            {% endif %}
+        </div>
+        <div class="va-detail-title-group">
+            <h2>{{ application.business_name }}</h2>
+            <div class="va-detail-meta">
+                <span class="va-vendor-id-chip" onclick="copyToClipboard('{{ application.vendor_id }}', this)" title="{% trans 'Click to copy' %}">
+                    <code>{{ application.vendor_id }}</code>
+                    <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
+                </span>
+                <span>•</span>
+                <span>{% trans "Submitted on" %} <strong>{{ application.submitted_at|date:"M d, Y" }}</strong> ({{ application.submitted_at|date:"h:i A" }})</span>
+                {% if application.website %}
+                <span>•</span>
+                <a href="{{ application.website }}" target="_blank" rel="noopener" style="color: var(--color-primary-600); display: inline-flex; align-items: center; gap: 4px; text-decoration: underline;">
+                    <i data-lucide="globe" style="width: 13px; height: 13px;"></i>
+                    {% trans "Website" %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div>
+        {% if application.status == 'PENDING' %}
+        <span class="va-badge va-badge-pending" style="font-size: 14px; padding: 6px 16px;">
+            <span class="va-pulse-dot"></span>
+            {% trans "Pending Review" %}
+        </span>
+        {% elif application.status == 'APPROVED' %}
+        <span class="va-badge va-badge-approved" style="font-size: 14px; padding: 6px 16px;">
+            <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+            {% trans "Approved" %}
+        </span>
+        {% elif application.status == 'REJECTED' %}
+        <span class="va-badge va-badge-rejected" style="font-size: 14px; padding: 6px 16px;">
+            <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+            {% trans "Rejected" %}
+        </span>
+        {% elif application.status == 'MORE_INFO' %}
+        <span class="va-badge va-badge-more_info" style="font-size: 14px; padding: 6px 16px;">
+            <i data-lucide="help-circle" style="width: 16px; height: 16px;"></i>
+            {% trans "More Info Requested" %}
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Main Workbench Grid (2 Columns) -->
+<div class="va-workbench-grid">
+    <!-- Left Column: Business & Compliance Data -->
+    <div>
+        <!-- Company Profile & Information Card -->
+        <div class="va-panel-card">
+            <div class="va-panel-header">
+                <h3 class="va-panel-title">
+                    <i data-lucide="building-2" style="width: 18px; height: 18px; color: #4f46e5;"></i>
+                    {% trans "Business & Company Profile" %}
+                </h3>
+            </div>
+            <div class="va-panel-body">
+                <div class="va-info-grid">
+                    <div class="va-info-item">
+                        <label>{% trans "Legal Business Name" %}</label>
+                        <div class="va-info-val">{{ application.business_name }}</div>
+                    </div>
+
+                    <div class="va-info-item">
+                        <label>{% trans "Tax ID (GST / PAN)" %}</label>
+                        <div class="va-tax-pill">
+                            <i data-lucide="shield-check" style="width: 14px; height: 14px; color: #16a34a;"></i>
+                            <span>{{ application.tax_id|default:"Not Provided" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="va-info-item" style="grid-column: 1 / -1;">
+                        <label>{% trans "Business Description & Offerings" %}</label>
+                        <div class="va-info-val" style="background-color: var(--color-bg-secondary); padding: var(--space-4); border-radius: var(--radius-lg); font-weight: normal; color: var(--color-text-secondary); line-height: 1.6;">
+                            {{ application.business_description|default:"No description provided by the vendor."|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact & Operating Address Card -->
+        <div class="va-panel-card">
+            <div class="va-panel-header">
+                <h3 class="va-panel-title">
+                    <i data-lucide="map-pin" style="width: 18px; height: 18px; color: #0284c7;"></i>
+                    {% trans "Contact Details & Operating Location" %}
+                </h3>
+            </div>
+            <div class="va-panel-body">
+                <div class="va-info-grid">
+                    <div class="va-info-item">
+                        <label>{% trans "Primary Email" %}</label>
+                        <div class="va-info-val">
+                            <a href="mailto:{{ application.contact_email }}" style="color: var(--color-primary-600); text-decoration: underline;">
+                                {{ application.contact_email }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="va-info-item">
+                        <label>{% trans "Contact Phone" %}</label>
+                        <div class="va-info-val">
+                            {% if application.contact_phone %}
+                            <a href="tel:{{ application.contact_phone }}" style="color: var(--color-primary-600);">
+                                {{ application.contact_phone }}
+                            </a>
+                            {% else %}
+                            <span style="color: var(--color-text-tertiary);">{% trans "None" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="va-info-item" style="grid-column: 1 / -1;">
+                        <label>{% trans "Registered Business Address" %}</label>
+                        <div class="va-info-val" style="font-weight: 500; line-height: 1.5;">
+                            {{ application.business_address|default:"-" }}
+                        </div>
+                        <div style="margin-top: var(--space-2); font-size: 13px; color: var(--color-text-secondary);">
+                            <strong>{{ application.city|default:"-" }}</strong>, {{ application.state|default:"-" }} — <code>{{ application.postal_code|default:"-" }}</code>, {{ application.country|default:"India" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brand Assets Showcase -->
+        <div class="va-panel-card">
+            <div class="va-panel-header">
+                <h3 class="va-panel-title">
+                    <i data-lucide="image" style="width: 18px; height: 18px; color: #8b5cf6;"></i>
+                    {% trans "Storefront Brand Assets" %}
+                </h3>
+            </div>
+            <div class="va-panel-body">
+                <div class="va-assets-row">
+                    <!-- Logo Box -->
+                    <div>
+                        <span style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-text-tertiary); margin-bottom: 6px;">
+                            {% trans "Store Logo" %}
+                        </span>
+                        <div class="va-asset-box va-asset-logo">
+                            {% if application.logo %}
+                            <img src="{{ application.logo.url }}" alt="{{ application.business_name }} Logo">
+                            {% else %}
+                            <div style="text-align: center; color: var(--color-text-muted); font-size: 12px;">
+                                <i data-lucide="image-off" style="width: 24px; height: 24px; margin: 0 auto 4px;"></i>
+                                {% trans "No Logo" %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Banner Box -->
+                    <div>
+                        <span style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-text-tertiary); margin-bottom: 6px;">
+                            {% trans "Store Banner" %}
+                        </span>
+                        <div class="va-asset-box va-asset-banner">
+                            {% if application.banner %}
+                            <img src="{{ application.banner.url }}" alt="{{ application.business_name }} Banner">
+                            {% else %}
+                            <div style="text-align: center; color: var(--color-text-muted); font-size: 12px;">
+                                <i data-lucide="image-off" style="width: 24px; height: 24px; margin: 0 auto 4px;"></i>
+                                {% trans "No Banner Uploaded" %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Decision Workbench & Audit Trail -->
+    <div>
+        <!-- Review Action Panel -->
+        <div class="va-panel-card" style="border-top: 4px solid #4f46e5;">
+            <div class="va-panel-header">
+                <h3 class="va-panel-title">
+                    <i data-lucide="gavel" style="width: 18px; height: 18px; color: #4f46e5;"></i>
+                    {% trans "Review Decision" %}
+                </h3>
+            </div>
+            <div class="va-panel-body">
+                {% if application.admin_notes %}
+                <div style="margin-bottom: var(--space-5); padding: var(--space-4); background-color: var(--color-bg-secondary); border-left: 3px solid #4f46e5; border-radius: var(--radius-md);">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 4px;">
+                        {% trans "Latest Decision Notes" %}
+                    </div>
+                    <p style="margin: 0; font-size: 13px; line-height: 1.5; color: var(--color-text-primary);">
+                        {{ application.admin_notes }}
+                    </p>
+                    {% if application.reviewed_by %}
+                    <div style="margin-top: 6px; font-size: 11px; color: var(--color-text-tertiary);">
+                        {% trans "By" %} {{ application.reviewed_by.get_full_name|default:application.reviewed_by.email }} {% trans "on" %} {{ application.reviewed_at|date:"M d, Y h:i A" }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if application.status == 'PENDING' or application.status == 'MORE_INFO' %}
+                <form method="post" action="{% url 'dashboard:vendor_application_action' application.pk %}" id="decisionForm">
+                    {% csrf_token %}
+                    
+                    <div class="va-decision-cards">
+                        <!-- Option 1: Approve -->
+                        <label class="va-decision-option option-approve">
+                            <input type="radio" name="action" value="approve" required style="margin-top: 3px;">
+                            <div class="va-decision-body">
+                                <div class="va-decision-title" style="color: #16a34a;">
+                                    <i data-lucide="check-circle-2" style="width: 15px; height: 15px; display: inline-block; vertical-align: text-bottom;"></i>
+                                    {% trans "Approve Application" %}
+                                </div>
+                                <div class="va-decision-desc">
+                                    {% trans "Creates active vendor profile, assigns vendor role, and unlocks seller dashboard." %}
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Option 2: Request More Info -->
+                        <label class="va-decision-option option-more-info">
+                            <input type="radio" name="action" value="more_info" style="margin-top: 3px;">
+                            <div class="va-decision-body">
+                                <div class="va-decision-title" style="color: #d97706;">
+                                    <i data-lucide="help-circle" style="width: 15px; height: 15px; display: inline-block; vertical-align: text-bottom;"></i>
+                                    {% trans "Request More Info" %}
+                                </div>
+                                <div class="va-decision-desc">
+                                    {% trans "Keep application open and ask the seller to provide missing compliance documentation." %}
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Option 3: Reject -->
+                        <label class="va-decision-option option-reject">
+                            <input type="radio" name="action" value="reject" style="margin-top: 3px;">
+                            <div class="va-decision-body">
+                                <div class="va-decision-title" style="color: #dc2626;">
+                                    <i data-lucide="x-circle" style="width: 15px; height: 15px; display: inline-block; vertical-align: text-bottom;"></i>
+                                    {% trans "Reject Application" %}
+                                </div>
+                                <div class="va-decision-desc">
+                                    {% trans "Decline this application. The applicant will be notified with the reason specified below." %}
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: var(--space-5);">
+                        <label for="id_notes" class="form-label" style="font-weight: 600;">
+                            {% trans "Decision Notes / Feedback" %}
+                        </label>
+                        <textarea name="notes" id="id_notes" class="form-textarea" rows="3" placeholder="{% trans 'Provide verification notes or required details for the seller...' %}" style="border-radius: var(--radius-lg);"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; justify-content: center;">
+                        <i data-lucide="send" class="btn-icon"></i>
+                        {% trans "Submit Review Decision" %}
+                    </button>
+                </form>
+                {% else %}
+                <div style="background-color: var(--color-bg-secondary); border-radius: var(--radius-xl); padding: var(--space-5); text-align: center;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background-color: rgba(79, 70, 229, 0.1); color: #4f46e5; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-3);">
+                        <i data-lucide="lock" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <h4 style="margin: 0 0 6px; font-size: var(--font-size-base); font-weight: 700;">
+                        {% trans "Decision Finalized" %}
+                    </h4>
+                    <p style="margin: 0; font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.5;">
+                        {% if application.status == 'APPROVED' %}
+                        {% trans "This vendor has been approved and activated in the marketplace." %}
+                        {% else %}
+                        {% trans "This application was rejected. Re-application can be submitted if required." %}
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Audit Trail Timeline -->
+        <div class="va-panel-card">
+            <div class="va-panel-header">
+                <h3 class="va-panel-title">
+                    <i data-lucide="history" style="width: 18px; height: 18px; color: #64748b;"></i>
+                    {% trans "Audit Timeline" %}
+                </h3>
+            </div>
+            <div class="va-panel-body">
+                <div class="va-timeline">
+                    <!-- Event 1: Initial Submission -->
+                    <div class="va-timeline-item">
+                        <div class="va-timeline-node"></div>
+                        <div style="font-size: 13px; font-weight: 700; color: var(--color-text-primary);">
+                            {% trans "Application Submitted" %}
+                        </div>
+                        <div style="font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 2px;">
+                            {{ application.submitted_at|date:"M d, Y h:i A" }}
+                        </div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary);">
+                            {% trans "By applicant" %} <code>{{ application.contact_email }}</code>
+                        </div>
+                    </div>
+
+                    <!-- Event 2: Audit Logs -->
+                    {% for log in application.audit_logs.all %}
+                    <div class="va-timeline-item">
+                        <div class="va-timeline-node" style="background-color: #10b981;"></div>
+                        <div style="font-size: 13px; font-weight: 700; color: var(--color-text-primary);">
+                            {{ log.get_action_display }}
+                        </div>
+                        <div style="font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 2px;">
+                            {{ log.created_at|date:"M d, Y h:i A" }}
+                        </div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary);">
+                            {% trans "Admin" %}: <strong>{{ log.user.email }}</strong>
+                            {% if log.details %}
+                            <div style="margin-top: 4px; font-size: 11px; background-color: var(--color-bg-secondary); padding: 4px 8px; border-radius: 4px;">
+                                {{ log.details.reason|default:log.details }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copyToClipboard(text, el) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalHtml = el.innerHTML;
+            el.innerHTML = '<code>Copied!</code> <i data-lucide="check" style="width: 12px; height: 12px; color: #16a34a;"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => {
+                el.innerHTML = originalHtml;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }, 1800);
+        });
+    }
+</script>
+{% endblock %}

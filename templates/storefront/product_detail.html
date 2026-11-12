@@ -1,0 +1,197 @@
+{% extends 'storefront/base_storefront.html' %}
+{% load static i18n %}
+
+{% block storefront_content %}
+<!-- Breadcrumb -->
+<nav class="breadcrumb" aria-label="{% trans "Breadcrumb" %}">
+    <a href="{% url 'store:home' %}">{% trans "Home" %}</a>
+    <span>›</span>
+    {% if product.category %}
+    <a href="{% url 'store:product_list' %}?category={{ product.category.slug }}">{{ product.category.name }}</a>
+    <span>›</span>
+    {% endif %}
+    <span style="color: var(--color-text-primary); font-weight: var(--font-weight-medium);">{{ product.name|truncatechars:40 }}</span>
+</nav>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr 320px; gap: var(--space-8); align-items: start; margin-bottom: var(--space-8);">
+    <!-- Column 1: Image Gallery -->
+    <div>
+        <div class="product-detail-gallery">
+            {% if primary_image %}
+                <img id="main-product-img" src="{{ primary_image.image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}
+                <i data-lucide="package" style="width: 80px; height: 80px; color: var(--color-text-muted);"></i>
+            {% endif %}
+        </div>
+
+        {% if gallery_images|length > 1 %}
+        <div class="product-detail-thumbs">
+            {% for img in gallery_images %}
+            <div class="product-detail-thumb" onclick="document.getElementById('main-product-img').src='{{ img.image.url }}'" aria-label="{% trans 'View image' %} {{ forloop.counter }}">
+                <img src="{{ img.image.url }}" alt="{{ product.name }}" loading="lazy">
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Column 2: Product Title, Pricing & Details -->
+    <div>
+        <span style="color: var(--color-primary-500); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); text-transform: uppercase; letter-spacing: 0.05em;">
+            {{ product.category.name|default:"General Marketplace" }}
+        </span>
+        <h1 style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: var(--space-2) 0 var(--space-3) 0; line-height: var(--line-height-tight);">
+            {{ product.name }}
+        </h1>
+
+        <!-- Store & Rating -->
+        <div class="product-meta">
+            <div class="product-rating">
+                <span>★ 4.8</span>
+                <span class="product-rating-count">(128 {% trans "reviews" %})</span>
+            </div>
+            <span style="color: var(--color-text-muted);">•</span>
+            <div class="product-seller">
+                {% trans "Store:" %} <strong>{{ product.vendor.business_name }}</strong>
+            </div>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div style="margin-bottom: var(--space-6);">
+            <div style="display: flex; align-items: baseline; gap: var(--space-3);">
+                <span class="price-large">
+                    ₹{{ product.price }}
+                </span>
+                {% if discount_percent > 0 %}
+                <span style="font-size: var(--font-size-lg); color: var(--color-text-muted); text-decoration: line-through;">
+                    ₹{{ product.compare_at_price }}
+                </span>
+                <span class="tag tag-error" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); padding: 1px 8px;">
+                    -{{ discount_percent }}% OFF
+                </span>
+                {% endif %}
+            </div>
+            {% if discount_amount > 0 %}
+            <p style="font-size: var(--font-size-xs); color: var(--color-success-600); font-weight: var(--font-weight-semibold); margin: var(--space-1) 0 0 0;">
+                {% trans "You save:" %} ₹{{ discount_amount }}
+            </p>
+            {% endif %}
+            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: var(--space-1) 0 0 0;">
+                {% trans "Inclusive of all taxes. Free delivery on orders over ₹499." %}
+            </p>
+        </div>
+
+        <!-- Short Description -->
+        {% if product.short_description %}
+        <div class="product-description-box">
+            {{ product.short_description }}
+        </div>
+        {% endif %}
+
+        <!-- Features / Specs -->
+        <div style="border-top: 1px solid var(--color-border-primary); padding-top: var(--space-4); margin-bottom: var(--space-6);">
+            <h3 style="font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0 0 var(--space-3) 0;">{% trans "Overview & Specifications" %}</h3>
+            <dl class="specs-list">
+                <dt>{% trans "SKU" %}</dt>
+                <dd style="font-family: var(--font-family-mono);">{{ product.sku }}</dd>
+
+                {% if product.weight %}
+                <dt>{% trans "Item Weight" %}</dt>
+                <dd>{{ product.weight }} kg</dd>
+                {% endif %}
+
+                {% if product.dimensions %}
+                <dt>{% trans "Dimensions" %}</dt>
+                <dd>{{ product.dimensions }}</dd>
+                {% endif %}
+
+                <dt>{% trans "Origin / Seller" %}</dt>
+                <dd>{{ product.vendor.city|default:"Registered Marketplace Seller" }}</dd>
+            </dl>
+        </div>
+
+        <!-- Full Description -->
+        <div style="border-top: 1px solid var(--color-border-primary); padding-top: var(--space-4);">
+            <h3 style="font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0 0 var(--space-3) 0;">{% trans "Product Details" %}</h3>
+            <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: var(--line-height-relaxed);">
+                {{ product.description|linebreaks }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 3: Buy Box -->
+    <div class="buy-box" style="position: sticky; top: var(--space-4);">
+        <div class="price-large">
+            ₹{{ product.price }}
+        </div>
+
+        <!-- Stock Status -->
+        <div class="stock-status {% if is_in_stock %}in-stock{% elif available_quantity <= 5 %}low-stock{% else %}out-of-stock{% endif %}" style="margin-bottom: var(--space-4);">
+            {% if is_in_stock %}
+                {% if available_quantity <= 5 %}
+                    <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
+                    {% trans "Only" %} {{ available_quantity }} {% trans "left in stock - order soon" %}
+                {% else %}
+                    <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+                    {% trans "In Stock" %}
+                {% endif %}
+            {% else %}
+                <i data-lucide="x-circle" style="width: 16px; height: 16px;"></i>
+                {% trans "Currently Out of Stock" %}
+            {% endif %}
+        </div>
+
+        {% if is_in_stock %}
+        <form action="{% url 'orders:cart_add' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ product.pk }}">
+
+            <!-- Quantity Selector -->
+            <div class="quantity-selector">
+                <label for="id_qty" style="{% comment %}moved to CSS{% endcomment %}">{% trans "Quantity:" %}</label>
+                <select name="quantity" id="id_qty" class="form-select">
+                    {% for i in "12345678910"|make_list %}
+                        {% if forloop.counter <= available_quantity %}
+                        <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Add to Cart CTA -->
+            <button type="submit" class="btn buy-btn" id="btn-add-to-cart">
+                <i data-lucide="shopping-cart" style="width: 18px; height: 18px; margin-right: var(--space-2);"></i>
+                {% trans "Add to Cart" %}
+            </button>
+
+            <!-- Buy Now CTA -->
+            <button type="submit" name="buy_now" value="1" class="btn buy-btn-outline" id="btn-buy-now">
+                <i data-lucide="zap" style="width: 18px; height: 18px; margin-right: var(--space-2);"></i>
+                {% trans "Buy Now" %}
+            </button>
+        </form>
+        {% endif %}
+
+        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--space-6); border-top: 1px solid var(--color-border-primary); padding-top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-1);">
+            <div>{% trans "Ships from:" %} <strong>ShopSense Logistics</strong></div>
+            <div>{% trans "Sold by:" %} <strong>{{ product.vendor.business_name }}</strong></div>
+            <div>{% trans "Returns:" %} <strong>{% trans "30-Day Free Replacement" %}</strong></div>
+            <div>{% trans "Payment:" %} <strong>{% trans "Secure transaction" %}</strong></div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products Section -->
+{% if related_products %}
+<section class="dashboard-section" style="border-top: 1px solid var(--color-border-primary); padding-top: var(--space-6); margin-top: var(--space-8);">
+    <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0 0 var(--space-4) 0;">
+        {% trans "Customers Also Viewed" %}
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-4);">
+        {% for rel in related_products %}
+        {% include 'storefront/partials/product_card.html' with product=rel show_add_to_cart=False %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

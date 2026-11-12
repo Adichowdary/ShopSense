@@ -1,0 +1,151 @@
+﻿{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Create Account" %} - ShopSense{% endblock %}
+
+{% block body_class %}register-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <div class="register-card">
+        <div class="register-header">
+            <div class="register-logo">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+            </div>
+            <h1 class="register-title">{% trans "Create Your Account" %}</h1>
+            <p class="register-subtitle">{% trans "Join ShopSense marketplace today" %}</p>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-error" role="alert">
+            <div class="alert-content">
+                {% for error in form.non_field_errors %}
+                <p class="alert-message">{{ error }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }} <span class="required" aria-hidden="true">*</span></label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                    <div class="form-error">{{ form.first_name.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }} <span class="required" aria-hidden="true">*</span></label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                    <div class="form-error">{{ form.last_name.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }} <span class="required" aria-hidden="true">*</span></label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                <div class="form-error">{{ form.email.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                <div class="form-error">{{ form.phone.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.role.id_for_label }}" class="form-label">{{ form.role.label }}</label>
+                {{ form.role }}
+                {% if form.role.errors %}
+                <div class="form-error">{{ form.role.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.password1.id_for_label }}" class="form-label">{{ form.password1.label }} <span class="required" aria-hidden="true">*</span></label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                    <div class="form-error">{{ form.password1.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.password2.id_for_label }}" class="form-label">{{ form.password2.label }} <span class="required" aria-hidden="true">*</span></label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                    <div class="form-error">{{ form.password2.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <i data-lucide="user-plus" class="btn-icon"></i>
+                {% trans "Create Account" %}
+            </button>
+        </form>
+
+        <div class="register-footer">
+            <p>{% trans "Already have an account?" %} <a href="{% url 'accounts:login' %}">{% trans "Sign in" %}</a></p>
+        </div>
+    </div>
+
+    <div class="login-branding">
+        <h2>{% trans "Join ShopSense" %}</h2>
+        <p>{% trans "Start selling or shopping on India's growing marketplace" %}</p>
+        <ul class="feature-list">
+            <li>
+                <i data-lucide="store" class="feature-icon"></i>
+                <span>{% trans "Multi-vendor marketplace platform" %}</span>
+            </li>
+            <li>
+                <i data-lucide="shield-check" class="feature-icon"></i>
+                <span>{% trans "Secure & reliable infrastructure" %}</span>
+            </li>
+            <li>
+                <i data-lucide="trending-up" class="feature-icon"></i>
+                <span>{% trans "Grow your business online" %}</span>
+            </li>
+            <li>
+                <i data-lucide="users" class="feature-icon"></i>
+                <span>{% trans "Millions of potential customers" %}</span>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const inputs = form.querySelectorAll('.form-input, .form-select');
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim() !== '') {
+                    this.classList.add('has-value');
+                } else {
+                    this.classList.remove('has-value');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+

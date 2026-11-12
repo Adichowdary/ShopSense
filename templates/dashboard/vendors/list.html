@@ -1,0 +1,226 @@
+﻿{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<div class="data-table-card">
+    <div class="card-header">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <h2 class="card-title">{% trans "Vendor Profiles" %}</h2>
+            <div style="display: flex; gap: var(--space-3); align-items: center;">
+                <a href="{% url 'vendors:onboarding' %}" class="btn btn-primary" target="_blank">
+                    <svg class="btn-icon" data-lucide="plus" aria-hidden="true"></svg>
+                    {% trans "Invite Vendor" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card-body" style="padding-top: var(--space-4); padding-bottom: 0;">
+            <form method="get" class="flex flex-wrap gap-3" style="align-items: flex-end;">
+                <div style="flex: 1; min-width: 240px;">
+                    <label for="id_search" class="form-label visually-hidden">{% trans "Search vendors" %}</label>
+                    <div class="input-group">
+                        <span class="input-group-text" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </span>
+                        <input type="search" name="search" id="id_search" class="form-input" placeholder="{% trans 'Search by business name, email, or vendor ID...' %}" value="{{ search_query }}" autocomplete="off">
+                    </div>
+                </div>
+                <div style="min-width: 180px;">
+                    <label for="id_status" class="form-label visually-hidden">{% trans "Filter by status" %}</label>
+                    <select name="status" id="id_status" class="form-select">
+                        <option value="">{% trans "All Statuses" %}</option>
+                        <option value="active" {% if current_status == 'active' %}selected{% endif %}>{% trans "Active" %}</option>
+                        <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>{% trans "Inactive" %}</option>
+                    </select>
+                </div>
+                <div style="min-width: 180px;">
+                    <label for="id_verified" class="form-label visually-hidden">{% trans "Filter by verification" %}</label>
+                    <select name="verified" id="id_verified" class="form-select">
+                        <option value="">{% trans "All Verification" %}</option>
+                        <option value="verified" {% if current_verified == 'verified' %}selected{% endif %}>{% trans "Verified" %}</option>
+                        <option value="unverified" {% if current_verified == 'unverified' %}selected{% endif %}>{% trans "Unverified" %}</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: var(--space-2);">
+                    <button type="submit" class="btn btn-primary">
+                        <svg class="btn-icon" data-lucide="search" aria-hidden="true"></svg>
+                        {% trans "Filter" %}
+                    </button>
+                    {% if search_query or current_status or current_verified %}
+                    <a href="{% url 'dashboard:vendor_list' %}" class="btn btn-outline">
+                        <svg class="btn-icon" data-lucide="x" aria-hidden="true"></svg>
+                        {% trans "Clear" %}
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Info -->
+        <div class="card-body" style="padding-top: var(--space-3); padding-bottom: 0;">
+            <p style="margin: 0; font-size: var(--font-size-sm); color: var(--color-text-tertiary);">
+                {% if vendors %}
+                    {% trans "Showing" %} {{ vendors.start_index }}–{{ vendors.end_index }} {% trans "of" %} {{ vendors.paginator.count }} {% trans "vendors" %}
+                {% else %}
+                    {% trans "No vendors found" %}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Vendors Table -->
+    <div class="table-container">
+        {% if vendors %}
+        <table class="table" role="table" data-row-link>
+            <thead>
+                <tr>
+                    <th scope="col" class="sortable" data-sort="vendor_id">
+                        {% trans "Vendor ID" %}
+                        <svg class="sort-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="4"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="4"></line></svg>
+                    </th>
+                    <th scope="col" class="sortable" data-sort="business_name">
+                        {% trans "Business Name" %}
+                        <svg class="sort-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="4"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="4"></line></svg>
+                    </th>
+                    <th scope="col" class="sortable" data-sort="contact_email">
+                        {% trans "Contact Email" %}
+                        <svg class="sort-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="4"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="4"></line></svg>
+                    </th>
+                    <th scope="col">{% trans "Owner" %}</th>
+                    <th scope="col">
+                        <select class="form-select form-select-sm" id="statusFilter" style="width: auto; padding: var(--space-1) var(--space-8) var(--space-1) var(--space-2);" aria-label="{% trans 'Filter by status' %}">
+                            <option value="">{% trans "All" %}</option>
+                            <option value="active" {% if current_status == 'active' %}selected{% endif %}>{% trans "Active" %}</option>
+                            <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>{% trans "Inactive" %}</option>
+                        </select>
+                    </th>
+                    <th scope="col">{% trans "Verified" %}</th>
+                    <th scope="col" class="sortable" data-sort="commission_rate">
+                        {% trans "Commission" %}
+                        <svg class="sort-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="4"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="4"></line></svg>
+                    </th>
+                    <th scope="col" class="sortable" data-sort="created_at">
+                        {% trans "Joined" %}
+                        <svg class="sort-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="4"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="4"></line></svg>
+                    </th>
+                    <th scope="col" style="width: 100px;">{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vendor in vendors %}
+                <tr data-href="{% url 'dashboard:vendor_detail' vendor.pk %}">
+                    <td><code class="code">{{ vendor.vendor_id }}</code></td>
+                    <td>
+                        <div style="font-weight: var(--font-weight-medium);">{{ vendor.business_name }}</div>
+                        {% if vendor.business_description %}
+                        <div class="text-muted text-xs truncate" style="max-width: 280px;">{{ vendor.business_description|truncatewords:10 }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="mailto:{{ vendor.contact_email }}" class="text-link">{{ vendor.contact_email }}</a>
+                        {% if vendor.contact_phone %}
+                        <div class="text-muted text-xs">{{ vendor.contact_phone }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <div class="avatar avatar-sm">
+                                {{ vendor.user.first_name|first|upper }}{{ vendor.user.last_name|first|upper }}
+                            </div>
+                            <div>
+                                <div style="font-weight: var(--font-weight-medium);">{{ vendor.user.get_full_name|default:vendor.user.email }}</div>
+                                <div class="text-xs text-muted">{{ vendor.user.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge {% if vendor.is_active %}badge-success{% else %}badge-neutral{% endif %} badge-dot">
+                            {% if vendor.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if vendor.is_verified %}badge-success{% else %}badge-warning{% endif %} badge-dot">
+                            {% if vendor.is_verified %}{% trans "Verified" %}{% else %}{% trans "Pending" %}{% endif %}
+                        </span>
+                    </td>
+                    <td><span class="font-medium">{{ vendor.commission_rate }}%</span></td>
+                    <td class="text-muted">{{ vendor.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <div class="table-row-actions">
+                            <a href="{% url 'dashboard:vendor_detail' vendor.pk %}" class="table-row-action" data-tooltip="{% trans 'View details' %}" aria-label="{% trans 'View vendor details' %}">
+                                <svg data-lucide="eye" aria-hidden="true"></svg>
+                            </a>
+                            <a href="{% url 'admin:vendors_vendorprofile_change' vendor.pk %}" class="table-row-action" data-tooltip="{% trans 'Edit in admin' %}" aria-label="{% trans 'Edit vendor in admin' %}" target="_blank">
+                                <svg data-lucide="edit" aria-hidden="true"></svg>
+                            </a>
+                            <button type="button" class="table-row-action" data-tooltip="{% trans 'Copy vendor ID' %}" aria-label="{% trans 'Copy vendor ID' %}" data-copy="{{ vendor.vendor_id }}">
+                                <svg data-lucide="copy" aria-hidden="true"></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="padding: var(--space-16);">
+            <svg class="empty-state-icon" data-lucide="store" aria-hidden="true"></svg>
+            <h3 class="empty-state-title">{% trans "No Vendors Found" %}</h3>
+            <p class="empty-state-message">{% trans "No vendor profiles match your current filters." %}</p>
+            {% if search_query or current_status or current_verified %}
+            <a href="{% url 'dashboard:vendor_list' %}" class="btn btn-outline" style="margin-top: var(--space-3);">
+                <svg class="btn-icon" data-lucide="x" aria-hidden="true"></svg>
+                {% trans "Clear Filters" %}
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if vendors.has_other_pages %}
+    <nav class="pagination" aria-label="Pagination">
+        {% if vendors.has_previous %}
+        <a href="?page={{ vendors.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_verified %}&verified={{ current_verified }}{% endif %}" class="pagination-link" aria-label="Previous page">
+            <svg data-lucide="chevron-left" width="16" height="16" aria-hidden="true"></svg>
+        </a>
+        {% endif %}
+
+        {% for num in vendors.paginator.page_range %}
+            {% if vendors.number == num %}
+            <span class="pagination-link active" aria-current="page">{{ num }}</span>
+            {% elif num > vendors.number|add:'-3' and num < vendors.number|add:'3' %}
+            <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_verified %}&verified={{ current_verified }}{% endif %}" class="pagination-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if vendors.has_next %}
+        <a href="?page={{ vendors.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_verified %}&verified={{ current_verified }}{% endif %}" class="pagination-link" aria-label="Next page">
+            <svg data-lucide="chevron-right" width="16" height="16" aria-hidden="true"></svg>
+        </a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status filter dropdown
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            const url = new URL(window.location);
+            if (this.value) {
+                url.searchParams.set('status', this.value);
+            } else {
+                url.searchParams.delete('status');
+            }
+            window.location.href = url.toString();
+        });
+    }
+
+    // Row click already handled by main.js via data-row-link
+});
+</script>
+{% endblock %}

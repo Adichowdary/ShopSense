@@ -1,0 +1,242 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<!-- Product Header -->
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-6); flex-wrap: wrap; gap: var(--space-4);">
+    <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-2);">
+            <h2 class="section-title" style="margin: 0;">{{ product.name }}</h2>
+            {% if product.status == 'ACTIVE' %}
+                <span class="badge badge-success badge-dot">{% trans "Active" %}</span>
+            {% elif product.status == 'DRAFT' %}
+                <span class="badge badge-warning badge-dot">{% trans "Draft" %}</span>
+            {% elif product.status == 'OUT_OF_STOCK' %}
+                <span class="badge badge-error badge-dot">{% trans "Out of Stock" %}</span>
+            {% else %}
+                <span class="badge badge-neutral badge-dot">{% trans "Inactive" %}</span>
+            {% endif %}
+
+            {% if product.is_featured %}
+                <span class="badge badge-warning">
+                    <i data-lucide="star" style="width: 12px; height: 12px; margin-right: 4px;" aria-hidden="true"></i>
+                    {% trans "Featured" %}
+                </span>
+            {% endif %}
+        </div>
+        <p style="margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+            SKU: <code>{{ product.sku }}</code> • 
+            {% if product.category %}{% trans "Category" %}: <strong>{{ product.category.name }}</strong> • {% endif %}
+            {% trans "Vendor" %}: <strong>{{ product.vendor.business_name }}</strong>
+        </p>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+        <a href="{% url 'dashboard:product_list' %}" class="btn btn-outline">
+            <i data-lucide="arrow-left" class="btn-icon"></i>
+            {% trans "Back to List" %}
+        </a>
+        <a href="{% url 'dashboard:product_edit' product.pk %}" class="btn btn-primary" id="btn-edit-product">
+            <i data-lucide="edit" class="btn-icon"></i>
+            {% trans "Edit Product" %}
+        </a>
+        <a href="{% url 'dashboard:product_delete' product.pk %}" class="btn btn-outline" style="color: var(--color-error-600);" id="btn-delete-product" data-confirm="{% trans 'Are you sure you want to delete this product? This action cannot be undone.' %}">
+            <i data-lucide="trash-2" class="btn-icon"></i>
+            {% trans "Delete" %}
+        </a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); align-items: start;">
+    <!-- Main Column: Media & Descriptions -->
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- Image Gallery Showcase -->
+        <section class="data-table-card">
+            <div class="card-header">
+                <h3 class="card-title">{% trans "Product Media" %}</h3>
+            </div>
+            <div class="card-body">
+                {% if gallery_images %}
+                <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    <!-- Main Featured Image -->
+                    <div style="max-height: 420px; border-radius: var(--radius-lg); overflow: hidden; background: var(--color-bg-secondary); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center;">
+                        <img src="{{ primary_image.image.url }}" alt="{{ product.name }}" style="max-height: 420px; width: 100%; object-fit: contain;">
+                    </div>
+
+                    <!-- Thumbnails row -->
+                    {% if gallery_images.count > 1 %}
+                    <div style="display: flex; gap: var(--space-3); overflow-x: auto; padding-bottom: var(--space-2);">
+                        {% for img in gallery_images %}
+                        <div style="width: 72px; height: 72px; border-radius: var(--radius-md); overflow: hidden; border: 2px solid {% if img.is_primary %}var(--color-primary-500){% else %}var(--color-border){% endif %}; flex-shrink: 0; background: var(--color-bg-secondary);">
+                            <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div style="padding: var(--space-12); text-align: center; background: var(--color-bg-secondary); border-radius: var(--radius-lg); border: 1px dashed var(--color-border);">
+                    <i data-lucide="image" style="width: 48px; height: 48px; color: var(--color-text-tertiary); margin: 0 auto var(--space-3);" aria-hidden="true"></i>
+                    <p style="margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+                        {% trans "No images uploaded for this product." %}
+                    </p>
+                    <a href="{% url 'dashboard:product_edit' product.pk %}" class="btn btn-outline" style="margin-top: var(--space-3);">
+                        <i data-lucide="upload" class="btn-icon"></i>
+                        {% trans "Add Images" %}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Product Description Card -->
+        <section class="data-table-card">
+            <div class="card-header">
+                <h3 class="card-title">{% trans "Product Details & Description" %}</h3>
+            </div>
+            <div class="card-body">
+                {% if product.short_description %}
+                <div style="padding: var(--space-4); background-color: var(--color-bg-secondary); border-radius: var(--radius-md); margin-bottom: var(--space-6); font-size: var(--font-size-sm); color: var(--color-text-secondary); border-left: 3px solid var(--color-primary-500);">
+                    {{ product.short_description|linebreaks }}
+                </div>
+                {% endif %}
+
+                <div style="color: var(--color-text-primary); line-height: 1.7;">
+                    {{ product.description|linebreaks }}
+                </div>
+            </div>
+        </section>
+
+        <!-- Physical Specifications -->
+        <section class="data-table-card">
+            <div class="card-header">
+                <h3 class="card-title">{% trans "Specifications & Shipping" %}</h3>
+            </div>
+            <div class="card-body">
+                <dl style="display: grid; grid-template-columns: 180px 1fr; gap: var(--space-3) var(--space-6); margin: 0;">
+                    <dt style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">{% trans "Weight" %}</dt>
+                    <dd style="margin: 0; font-weight: var(--font-weight-medium);">{{ product.weight|default:"—" }} {% if product.weight %}kg{% endif %}</dd>
+
+                    <dt style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">{% trans "Dimensions" %}</dt>
+                    <dd style="margin: 0; font-weight: var(--font-weight-medium);">{{ product.dimensions|default:"—" }}</dd>
+
+                    <dt style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">{% trans "Slug" %}</dt>
+                    <dd style="margin: 0;"><code>{{ product.slug }}</code></dd>
+
+                    {% if product.meta_title %}
+                    <dt style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">{% trans "Meta Title" %}</dt>
+                    <dd style="margin: 0;">{{ product.meta_title }}</dd>
+                    {% endif %}
+
+                    {% if product.meta_description %}
+                    <dt style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">{% trans "Meta Description" %}</dt>
+                    <dd style="margin: 0;">{{ product.meta_description }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </section>
+    </div>
+
+    <!-- Side Column: Pricing, Inventory & Vendor Summary -->
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- Pricing Card -->
+        <section class="data-table-card">
+            <div class="card-header">
+                <h3 class="card-title" style="font-size: var(--font-size-base);">{% trans "Pricing Breakdown" %}</h3>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: var(--space-4);">
+                    <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); text-transform: uppercase;">{% trans "Current Price" %}</span>
+                    <div style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary);">
+                        ₹{{ product.price }}
+                    </div>
+                </div>
+
+                {% if product.compare_at_price %}
+                <div style="display: flex; justify-content: space-between; padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: var(--font-size-sm);">
+                    <span class="text-muted">{% trans "Original Price:" %}</span>
+                    <span style="text-decoration: line-through; color: var(--color-text-tertiary);">₹{{ product.compare_at_price }}</span>
+                </div>
+                {% endif %}
+
+                {% if product.cost_price %}
+                <div style="display: flex; justify-content: space-between; padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: var(--font-size-sm);">
+                    <span class="text-muted">{% trans "Internal Cost:" %}</span>
+                    <span style="font-weight: var(--font-weight-medium);">₹{{ product.cost_price }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Inventory Status Card -->
+        <section class="data-table-card">
+            <div class="card-header">
+                <h3 class="card-title" style="font-size: var(--font-size-base);">{% trans "Inventory Status" %}</h3>
+            </div>
+            <div class="card-body">
+                {% if has_inventory %}
+                <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="text-muted" style="font-size: var(--font-size-sm);">{% trans "Available Stock:" %}</span>
+                        <span style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); {% if product.inventory.quantity <= 0 %}color: var(--color-error-600);{% elif product.inventory.is_low_stock %}color: var(--color-warning-600);{% else %}color: var(--color-success-600);{% endif %}">
+                            {{ product.inventory.quantity }} {% trans "units" %}
+                        </span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: var(--font-size-sm); padding-top: var(--space-2); border-top: 1px solid var(--color-border);">
+                        <span class="text-muted">{% trans "Reserved Stock:" %}</span>
+                        <span>{{ product.inventory.reserved_quantity }}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: var(--font-size-sm); padding-top: var(--space-2); border-top: 1px solid var(--color-border);">
+                        <span class="text-muted">{% trans "Low Stock Threshold:" %}</span>
+                        <span>{{ product.inventory.low_stock_threshold }}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: var(--font-size-sm); padding-top: var(--space-2); border-top: 1px solid var(--color-border);">
+                        <span class="text-muted">{% trans "Tracking Mode:" %}</span>
+                        <span>{% if product.inventory.track_quantity %}{% trans "Automatic" %}{% else %}{% trans "Manual" %}{% endif %}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: var(--font-size-sm); padding-top: var(--space-2); border-top: 1px solid var(--color-border);">
+                        <span class="text-muted">{% trans "Allow Backorders:" %}</span>
+                        <span>{% if product.inventory.allow_backorder %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</span>
+                    </div>
+                </div>
+                {% else %}
+                <p style="margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+                    {% trans "No inventory record found for this product." %}
+                </p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Vendor & Audit Info Card -->
+        <section class="data-table-card">
+            <div class="card-header">
+                <h3 class="card-title" style="font-size: var(--font-size-base);">{% trans "Vendor & History" %}</h3>
+            </div>
+            <div class="card-body" style="font-size: var(--font-size-sm);">
+                <div style="margin-bottom: var(--space-3);">
+                    <span class="text-muted" style="font-size: var(--font-size-xs);">{% trans "STORE" %}</span>
+                    <div style="font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">
+                        {{ product.vendor.business_name }}
+                    </div>
+                    <div class="text-xs text-muted">{{ product.vendor.vendor_id }}</div>
+                </div>
+
+                <div style="padding-top: var(--space-3); border-top: 1px solid var(--color-border);">
+                    <span class="text-muted" style="font-size: var(--font-size-xs);">{% trans "CREATED AT" %}</span>
+                    <div>{{ product.created_at|date:"M d, Y H:i" }}</div>
+                </div>
+
+                <div style="padding-top: var(--space-3); border-top: 1px solid var(--color-border);">
+                    <span class="text-muted" style="font-size: var(--font-size-xs);">{% trans "LAST MODIFIED" %}</span>
+                    <div>{{ product.updated_at|date:"M d, Y H:i" }}</div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

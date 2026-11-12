@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{{ vendor.business_name }} - Vendor Profile{% endblock %}
+
+{% block body_class %}vendor-profile-page{% endblock %}
+
+{% block content %}
+<div class="vendor-profile-container">
+    <div class="vendor-profile-header">
+        <div class="vendor-profile-info">
+            <div class="vendor-logo">
+                {% if vendor.logo %}
+                    <img src="{{ vendor.logo.url }}" alt="{{ vendor.business_name }} logo" style="width: 80px; height: 80px; border-radius: var(--radius-lg); object-fit: cover;">
+                {% else %}
+                    <div class="vendor-logo-placeholder">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10l8 4"></path>
+                        </svg>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="vendor-profile-details">
+                <h1>{{ vendor.business_name }}</h1>
+                <p class="vendor-id">Vendor ID: <code>{{ vendor.vendor_id }}</code></p>
+                <div class="vendor-meta">
+                    <span class="status-badge {% if vendor.is_active %}status-active{% else %}status-inactive{% endif %}">
+                        {% if vendor.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                    </span>
+                    <span class="verified-badge {% if vendor.is_verified %}verified{% else %}pending{% endif %}">
+                        {% if vendor.is_verified %}{% trans "Verified" %}{% else %}{% trans "Pending Verification" %}{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="vendor-profile-content">
+        <div class="vendor-profile-section">
+            <h2>{% trans "Business Information" %}</h2>
+            <dl class="vendor-details">
+                <dt>{% trans "Business Name" %}</dt>
+                <dd>{{ vendor.business_name }}</dd>
+
+                <dt>{% trans "Business Description" %}</dt>
+                <dd>{{ vendor.business_description|default:"-"|linebreaks }}</dd>
+
+                <dt>{% trans "Contact Email" %}</dt>
+                <dd><a href="mailto:{{ vendor.contact_email }}">{{ vendor.contact_email }}</a></dd>
+
+                <dt>{% trans "Contact Phone" %}</dt>
+                <dd>{{ vendor.contact_phone|default:"-" }}</dd>
+
+                <dt>{% trans "Website" %}</dt>
+                <dd>
+                    {% if vendor.website %}
+                        <a href="{{ vendor.website }}" target="_blank" rel="noopener">{{ vendor.website }}</a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </dd>
+
+                <dt>{% trans "Tax ID (GST/PAN)" %}</dt>
+                <dd>{{ vendor.tax_id|default:"-" }}</dd>
+
+                <dt>{% trans "Commission Rate" %}</dt>
+                <dd>{{ vendor.commission_rate }}%</dd>
+            </dl>
+        </div>
+
+        <div class="vendor-profile-section">
+            <h2>{% trans "Address" %}</h2>
+            <dl class="vendor-details">
+                <dt>{% trans "Address" %}</dt>
+                <dd>{{ vendor.business_address|default:"-"|linebreaks }}</dd>
+
+                <dt>{% trans "City" %}</dt>
+                <dd>{{ vendor.city|default:"-" }}</dd>
+
+                <dt>{% trans "State" %}</dt>
+                <dd>{{ vendor.state|default:"-" }}</dd>
+
+                <dt>{% trans "Postal Code" %}</dt>
+                <dd>{{ vendor.postal_code|default:"-" }}</dd>
+
+                <dt>{% trans "Country" %}</dt>
+                <dd>{{ vendor.country|default:"India" }}</dd>
+            </dl>
+        </div>
+
+        <div class="vendor-profile-section">
+            <h2>{% trans "Owner Information" %}</h2>
+            <dl class="vendor-details">
+                <dt>{% trans "Owner Name" %}</dt>
+                <dd>{{ vendor.user.get_full_name|default:vendor.user.email }}</dd>
+
+                <dt>{% trans "Owner Email" %}</dt>
+                <dd><a href="mailto:{{ vendor.user.email }}">{{ vendor.user.email }}</a></dd>
+
+                <dt>{% trans "Owner Phone" %}</dt>
+                <dd>{{ vendor.user.phone|default:"-" }}</dd>
+            </dl>
+        </div>
+
+        <div class="vendor-profile-section">
+            <h2>{% trans "Commission & Payments" %}</h2>
+            <dl class="vendor-details">
+                <dt>{% trans "Commission Rate" %}</dt>
+                <dd>{{ vendor.commission_rate }}%</dd>
+
+                <dt>{% trans "Status" %}</dt>
+                <dd>
+                    <span class="badge {% if vendor.is_active %}badge-success{% else %}badge-neutral{% endif %}">
+                        {% if vendor.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                    </span>
+                </dd>
+
+                <dt>{% trans "Verified" %}</dt>
+                <dd>
+                    <span class="badge {% if vendor.is_verified %}badge-success{% else %}badge-warning{% endif %}">
+                        {% if vendor.is_verified %}{% trans "Yes" %}{% else %}{% trans "Pending" %}{% endif %}
+                    </span>
+                </dd>
+            </dl>
+        </div>
+
+        <div class="vendor-profile-section">
+            <h2>{% trans "Timestamps" %}</h2>
+            <dl class="vendor-details">
+                <dt>{% trans "Created" %}</dt>
+                <dd>{{ vendor.created_at|date:"M d, Y H:i" }}</dd>
+
+                <dt>{% trans "Last Updated" %}</dt>
+                <dd>{{ vendor.updated_at|date:"M d, Y H:i" }}</dd>
+            </dl>
+        </div>
+
+        <div class="vendor-actions">
+            <a href="{% url 'vendors:order_list' %}" class="btn btn-primary">
+                <i data-lucide="shopping-cart" class="btn-icon"></i>
+                {% trans "Manage Orders & Fulfillment" %}
+            </a>
+            <a href="{% url 'vendors:profile_edit' %}" class="btn btn-outline">
+                <i data-lucide="edit" class="btn-icon"></i>
+                {% trans "Edit Profile" %}
+            </a>
+            <a href="{% url 'dashboard:vendor_list' %}" class="btn btn-outline">
+                <i data-lucide="arrow-left" class="btn-icon"></i>
+                {% trans "Back to Dashboard" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %}

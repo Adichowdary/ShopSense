@@ -1,0 +1,340 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); flex-wrap: wrap; gap: var(--space-3);">
+    <div>
+        <h2 class="section-title" style="margin-bottom: var(--space-1);">{% trans "Add New Product" %}</h2>
+        <p style="margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+            {% trans "Create a new catalog item with pricing, inventory tracking, and gallery images" %}
+        </p>
+    </div>
+    <div style="display: flex; gap: var(--space-2);">
+        <a href="{% url 'dashboard:product_list' %}" class="btn btn-outline">
+            <i data-lucide="arrow-left" class="btn-icon"></i>
+            {% trans "Back to Products" %}
+        </a>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" novalidate id="product-form">
+    {% csrf_token %}
+
+    {% if form.errors or inventory_form.errors %}
+    <div class="alert alert-error" style="margin-bottom: var(--space-6); background-color: var(--color-error-50); border: 1px solid var(--color-error-200); border-radius: var(--radius-lg); padding: var(--space-4);">
+        <div style="display: flex; gap: var(--space-3); align-items: flex-start;">
+            <i data-lucide="alert-circle" style="color: var(--color-error-600); width: 22px; height: 22px; flex-shrink: 0; margin-top: 2px;"></i>
+            <div>
+                <h4 style="margin: 0 0 var(--space-2) 0; color: var(--color-error-800); font-weight: var(--font-weight-semibold); font-size: var(--font-size-base);">
+                    {% trans "Please resolve the following errors:" %}
+                </h4>
+                <ul style="margin: 0; padding-left: var(--space-4); color: var(--color-error-700); font-size: var(--font-size-sm);">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                    {% for field in inventory_form %}
+                        {% for error in field.errors %}
+                            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in inventory_form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); align-items: start;">
+        <!-- Left Column: Core Product Details & Media -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+            <!-- Basic Information Card -->
+            <section class="data-table-card">
+                <div class="card-header">
+                    <h3 class="card-title" style="display: flex; align-items: center; gap: var(--space-2);">
+                        <i data-lucide="info" style="width: 18px; height: 18px; color: var(--color-primary-600);"></i>
+                        {% trans "Basic Information" %}
+                    </h3>
+                </div>
+                <div class="card-body" style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                            {% trans "Product Name" %} <span style="color: var(--color-error-500);">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                        <div class="form-group">
+                            <label for="{{ form.sku.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                                {% trans "SKU (Stock Keeping Unit)" %} <span style="color: var(--color-error-500);">*</span>
+                            </label>
+                            {{ form.sku }}
+                            {% if form.sku.errors %}
+                                <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.sku.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.slug.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                                {% trans "URL Slug" %} <span class="text-muted" style="font-size: var(--font-size-xs); font-weight: normal;">({% trans "Optional, auto-generated" %})</span>
+                            </label>
+                            {{ form.slug }}
+                            {% if form.slug.errors %}
+                                <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.slug.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.short_description.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                            {% trans "Short Description" %}
+                        </label>
+                        {{ form.short_description }}
+                        <span class="text-muted" style="font-size: var(--font-size-xs); display: block; margin-top: 4px;">{% trans "A brief summary for previews and social sharing." %}</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                            {% trans "Full Description" %} <span style="color: var(--color-error-500);">*</span>
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pricing & Valuation Card -->
+            <section class="data-table-card">
+                <div class="card-header">
+                    <h3 class="card-title" style="display: flex; align-items: center; gap: var(--space-2);">
+                        <i data-lucide="indian-rupee" style="width: 18px; height: 18px; color: var(--color-primary-600);"></i>
+                        {% trans "Pricing" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4);">
+                        <div class="form-group">
+                            <label for="{{ form.price.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                                {% trans "Selling Price (₹)" %} <span style="color: var(--color-error-500);">*</span>
+                            </label>
+                            {{ form.price }}
+                            {% if form.price.errors %}
+                                <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.price.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.compare_at_price.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                                {% trans "Original / Compare Price (₹)" %}
+                            </label>
+                            {{ form.compare_at_price }}
+                            <span class="text-muted" style="font-size: var(--font-size-xs); display: block; margin-top: 4px;">{% trans "Shows strikethrough discount if higher than selling price" %}</span>
+                            {% if form.compare_at_price.errors %}
+                                <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.compare_at_price.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.cost_price.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                                {% trans "Cost Price (₹)" %}
+                            </label>
+                            {{ form.cost_price }}
+                            <span class="text-muted" style="font-size: var(--font-size-xs); display: block; margin-top: 4px;">{% trans "Internal cost (never displayed to customers)" %}</span>
+                            {% if form.cost_price.errors %}
+                                <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.cost_price.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inventory Management Card -->
+            <section class="data-table-card">
+                <div class="card-header">
+                    <h3 class="card-title" style="display: flex; align-items: center; gap: var(--space-2);">
+                        <i data-lucide="layers" style="width: 18px; height: 18px; color: var(--color-primary-600);"></i>
+                        {% trans "Inventory Tracking" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4);">
+                        <div class="form-group">
+                            <label for="{{ inventory_form.quantity.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                                {% trans "Initial Stock Quantity" %} <span style="color: var(--color-error-500);">*</span>
+                            </label>
+                            {{ inventory_form.quantity }}
+                            {% if inventory_form.quantity.errors %}
+                                <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ inventory_form.quantity.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ inventory_form.low_stock_threshold.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                                {% trans "Low Stock Threshold" %}
+                            </label>
+                            {{ inventory_form.low_stock_threshold }}
+                            <span class="text-muted" style="font-size: var(--font-size-xs); display: block; margin-top: 4px;">{% trans "Triggers low stock warning in dashboard" %}</span>
+                            {% if inventory_form.low_stock_threshold.errors %}
+                                <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ inventory_form.low_stock_threshold.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border);">
+                        <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                            {{ inventory_form.track_quantity }}
+                            <span style="font-size: var(--font-size-sm); color: var(--color-text-primary); font-weight: var(--font-weight-medium);">
+                                {% trans "Track inventory quantity automatically on order placements" %}
+                            </span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                            {{ inventory_form.allow_backorder }}
+                            <span style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                                {% trans "Continue selling when stock reaches zero (Allow backorders)" %}
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Media / Images Card -->
+            <section class="data-table-card">
+                <div class="card-header">
+                    <h3 class="card-title" style="display: flex; align-items: center; gap: var(--space-2);">
+                        <i data-lucide="image" style="width: 18px; height: 18px; color: var(--color-primary-600);"></i>
+                        {% trans "Product Media" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div style="border: 2px dashed var(--color-border); border-radius: var(--radius-lg); padding: var(--space-8); text-align: center; background-color: var(--color-bg-secondary);">
+                        <i data-lucide="upload-cloud" style="width: 48px; height: 48px; color: var(--color-primary-500); margin: 0 auto var(--space-3);" aria-hidden="true"></i>
+                        <h4 style="margin: 0 0 var(--space-1) 0; font-size: var(--font-size-base); font-weight: var(--font-weight-medium); color: var(--color-text-primary);">
+                            {% trans "Upload product images" %}
+                        </h4>
+                        <p style="margin: 0 0 var(--space-4) 0; font-size: var(--font-size-xs); color: var(--color-text-tertiary);">
+                            {% trans "PNG, JPG, WebP, or GIF up to 5MB each. First uploaded image becomes the primary thumbnail." %}
+                        </p>
+                        <input type="file" name="images" id="id_images" multiple accept="image/jpeg,image/png,image/webp,image/gif" class="form-file-input" style="max-width: 320px; margin: 0 auto;">
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Column: Categorization, Status & Meta -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+            <!-- Status & Visibility Card -->
+            <section class="data-table-card">
+                <div class="card-header">
+                    <h3 class="card-title" style="font-size: var(--font-size-base);">{% trans "Status & Visibility" %}</h3>
+                </div>
+                <div class="card-body" style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    <div class="form-group">
+                        <label for="{{ form.status.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                            {% trans "Status" %}
+                        </label>
+                        {{ form.status }}
+                    </div>
+
+                    <div class="form-group" style="padding-top: var(--space-2); border-top: 1px solid var(--color-border);">
+                        <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                            {{ form.is_featured }}
+                            <span style="font-size: var(--font-size-sm); color: var(--color-text-primary); font-weight: var(--font-weight-medium);">
+                                {% trans "Featured Product" %}
+                            </span>
+                        </label>
+                        <span class="text-muted" style="font-size: var(--font-size-xs); display: block; margin-left: 24px;">
+                            {% trans "Highlighted on homepage and promotional sections" %}
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Organization & Category Card -->
+            <section class="data-table-card">
+                <div class="card-header">
+                    <h3 class="card-title" style="font-size: var(--font-size-base);">{% trans "Organization" %}</h3>
+                </div>
+                <div class="card-body" style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    {% if user.can_access_admin_dashboard %}
+                    <div class="form-group">
+                        <label for="{{ form.vendor.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                            {% trans "Vendor / Store" %} <span style="color: var(--color-error-500);">*</span>
+                        </label>
+                        {{ form.vendor }}
+                        {% if form.vendor.errors %}
+                            <div class="form-error" style="color: var(--color-error-600); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.vendor.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                        {{ form.vendor }}
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="{{ form.category.id_for_label }}" class="form-label" style="font-weight: var(--font-weight-medium);">
+                            {% trans "Category" %}
+                        </label>
+                        {{ form.category }}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Shipping & Physical Dimensions Card -->
+            <section class="data-table-card">
+                <div class="card-header">
+                    <h3 class="card-title" style="font-size: var(--font-size-base);">{% trans "Shipping Specifications" %}</h3>
+                </div>
+                <div class="card-body" style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    <div class="form-group">
+                        <label for="{{ form.weight.id_for_label }}" class="form-label">{% trans "Weight (kg)" %}</label>
+                        {{ form.weight }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.dimensions.id_for_label }}" class="form-label">{% trans "Dimensions (LxWxH cm)" %}</label>
+                        {{ form.dimensions }}
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEO & Meta Card -->
+            <section class="data-table-card">
+                <div class="card-header">
+                    <h3 class="card-title" style="font-size: var(--font-size-base);">{% trans "Search Engine Optimization" %}</h3>
+                </div>
+                <div class="card-body" style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    <div class="form-group">
+                        <label for="{{ form.meta_title.id_for_label }}" class="form-label">{% trans "Meta Title" %}</label>
+                        {{ form.meta_title }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.meta_description.id_for_label }}" class="form-label">{% trans "Meta Description" %}</label>
+                        {{ form.meta_description }}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Submit Action Card -->
+            <div class="data-table-card" style="padding: var(--space-4);">
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;" id="btn-save-product">
+                    <i data-lucide="check" class="btn-icon"></i>
+                    {% trans "Publish Product" %}
+                </button>
+                <a href="{% url 'dashboard:product_list' %}" class="btn btn-outline" style="width: 100%; justify-content: center; margin-top: var(--space-2);">
+                    {% trans "Cancel" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

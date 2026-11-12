@@ -1,0 +1,165 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} | ShopSense Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="h3 font-weight-bold text-gray-900 mb-1">{% trans "Warehouse Stock Transfers" %}</h1>
+            <p class="text-muted small mb-0">{% trans "Track and control the complete transfer lifecycle between facilities." %}</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary btn-sm d-flex align-items-center gap-1" data-bs-toggle="collapse" data-bs-target="#createTransferCollapse">
+                <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                {% trans "New Transfer Request" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Create Transfer Form Collapse -->
+    <div class="collapse mb-4" id="createTransferCollapse">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="card-title font-weight-bold mb-0">{% trans "Initiate Stock Transfer" %}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'inventory:transfer_create' %}">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small font-weight-semibold">{% trans "Source Warehouse" %}</label>
+                            <select name="source_warehouse" class="form-select" required>
+                                <option value="">-- {% trans "Select Origin" %} --</option>
+                                {% for wh in warehouses %}
+                                <option value="{{ wh.pk }}">{{ wh.name }} ({{ wh.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small font-weight-semibold">{% trans "Destination Warehouse" %}</label>
+                            <select name="destination_warehouse" class="form-select" required>
+                                <option value="">-- {% trans "Select Destination" %} --</option>
+                                {% for wh in warehouses %}
+                                <option value="{{ wh.pk }}">{{ wh.name }} ({{ wh.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small font-weight-semibold">{% trans "Product" %}</label>
+                            <select name="product" class="form-select" required>
+                                <option value="">-- {% trans "Select Product" %} --</option>
+                                {% for p in products %}
+                                <option value="{{ p.pk }}">{{ p.name }} ({{ p.sku }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small font-weight-semibold">{% trans "Quantity" %}</label>
+                            <input type="number" name="quantity" class="form-input" min="1" placeholder="Units to transfer" required>
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label small font-weight-semibold">{% trans "Transfer Notes" %}</label>
+                            <input type="text" name="notes" class="form-input" placeholder="e.g. Replenishment for North Hub">
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">{% trans "Submit Transfer Request" %}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfers Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <h5 class="card-title font-weight-bold mb-0">{% trans "Transfer History & In-Transit Logs" %}</h5>
+            <span class="badge bg-light text-dark">{{ transfers.count }} {% trans "Records" %}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-uppercase">
+                        <tr>
+                            <th>{% trans "Transfer Number" %}</th>
+                            <th>{% trans "Route" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Items & Quantities" %}</th>
+                            <th>{% trans "Timestamps" %}</th>
+                            <th class="text-end">{% trans "Lifecycle Action" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trf in transfers %}
+                        <tr>
+                            <td>
+                                <div class="font-weight-bold font-monospace">{{ trf.transfer_number }}</div>
+                                <div class="small text-muted">{{ trf.requested_by.email|default:"Operator" }}</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-1 font-weight-semibold">
+                                    <span>{{ trf.source_warehouse.code }}</span>
+                                    <i data-lucide="arrow-right" style="width: 14px; height: 14px;" class="text-muted"></i>
+                                    <span>{{ trf.destination_warehouse.code }}</span>
+                                </div>
+                                <div class="small text-muted">{{ trf.notes }}</div>
+                            </td>
+                            <td>
+                                {% if trf.status == 'REQUESTED' %}
+                                    <span class="badge bg-warning text-dark">REQUESTED</span>
+                                {% elif trf.status == 'APPROVED' %}
+                                    <span class="badge bg-info">APPROVED</span>
+                                {% elif trf.status == 'IN_TRANSIT' %}
+                                    <span class="badge bg-primary">IN TRANSIT</span>
+                                {% elif trf.status == 'RECEIVED' %}
+                                    <span class="badge bg-success">RECEIVED</span>
+                                {% elif trf.status == 'CANCELLED' %}
+                                    <span class="badge bg-secondary">CANCELLED</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% for item in trf.items.all %}
+                                <div>
+                                    <span class="font-weight-bold">{{ item.product.sku }}</span>:
+                                    Req: {{ item.requested_quantity }}
+                                    {% if item.shipped_quantity %}• Ship: {{ item.shipped_quantity }}{% endif %}
+                                    {% if item.received_quantity %}• Recv: {{ item.received_quantity }}{% endif %}
+                                </div>
+                                {% endfor %}
+                            </td>
+                            <td class="small text-muted">
+                                <div>Req: {{ trf.created_at|date:"Y-m-d H:i" }}</div>
+                                {% if trf.shipped_at %}<div>Ship: {{ trf.shipped_at|date:"Y-m-d H:i" }}</div>{% endif %}
+                                {% if trf.received_at %}<div>Recv: {{ trf.received_at|date:"Y-m-d H:i" }}</div>{% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form method="post" action="{% url 'inventory:transfer_action' trf.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    {% if trf.status == 'REQUESTED' %}
+                                        <button type="submit" name="action" value="approve" class="btn btn-sm btn-info py-0 px-2 text-white">{% trans "Approve" %}</button>
+                                        <button type="submit" name="action" value="cancel" class="btn btn-sm btn-outline-danger py-0 px-2">{% trans "Cancel" %}</button>
+                                    {% elif trf.status == 'APPROVED' %}
+                                        <button type="submit" name="action" value="ship" class="btn btn-sm btn-primary py-0 px-2">{% trans "Ship Items" %}</button>
+                                        <button type="submit" name="action" value="cancel" class="btn btn-sm btn-outline-danger py-0 px-2">{% trans "Cancel" %}</button>
+                                    {% elif trf.status == 'IN_TRANSIT' %}
+                                        <button type="submit" name="action" value="receive" class="btn btn-sm btn-success py-0 px-2">{% trans "Mark Received" %}</button>
+                                    {% else %}
+                                        <span class="text-muted small">&mdash;</span>
+                                    {% endif %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">{% trans "No stock transfer operations on record." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

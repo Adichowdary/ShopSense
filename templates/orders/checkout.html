@@ -1,0 +1,235 @@
+{% extends 'storefront/base_storefront.html' %}
+{% load static i18n %}
+
+{% block storefront_content %}
+<div style="margin-bottom: var(--space-6);">
+    <h1 style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0; line-height: var(--line-height-tight);">
+        {% trans "Checkout" %}
+    </h1>
+    <p style="margin: var(--space-1) 0 0 0; color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+        {% trans "Review your shipping details, payment method, and confirm your order" %}
+    </p>
+</div>
+
+<form action="{% url 'orders:place_order' %}" method="post" id="checkout-form">
+    {% csrf_token %}
+
+    <div style="display: grid; grid-template-columns: 1fr 360px; gap: var(--space-8); align-items: start;">
+        <!-- Left: Address & Payment -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+            <!-- Shipping Address -->
+            <section class="card" style="padding: var(--space-6);">
+                <h2 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0 0 var(--space-4) 0; display: flex; align-items: center; gap: var(--space-2);">
+                    <i data-lucide="map-pin" style="width: 20px; height: 20px; color: var(--color-primary-600);"></i>
+                    1. {% trans "Delivery Address" %}
+                </h2>
+
+                {% if addresses %}
+                <div style="margin-bottom: var(--space-5);">
+                    <label style="font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); color: var(--color-text-secondary); display: block; margin-bottom: var(--space-2);">
+                        {% trans "Select a saved address:" %}
+                    </label>
+                    <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                        {% for addr in addresses %}
+                        <label style="display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border-primary); border-radius: var(--radius-lg); cursor: pointer; background: var(--color-bg-secondary);">
+                            <input type="radio" name="address_id" value="{{ addr.pk }}" {% if addr == default_address %}checked{% endif %} style="margin-top: var(--space-0-5);" onchange="toggleNewAddressForm(false)">
+                            <div>
+                                <div style="font-weight: var(--font-weight-bold); font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                                    {{ addr.first_name }} {{ addr.last_name }}
+                                    {% if addr.is_default %}<span style="background: var(--color-primary-100); color: var(--color-primary-700); font-size: var(--font-size-2xs); padding: 1px 6px; border-radius: var(--radius-md); margin-left: var(--space-1);">{% trans "Default" %}</span>{% endif %}
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: var(--space-0-5);">
+                                    {{ addr.street_address }}, {{ addr.city }}, {{ addr.state }} - {{ addr.postal_code }}, {{ addr.country }}
+                                </div>
+                                <div style="font-size: var(--font-size-2xs); color: var(--color-text-tertiary); margin-top: var(--space-0-5);">
+                                    {% trans "Phone:" %} {{ addr.phone }}
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+
+                        <label style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2-5) var(--space-3); border: 1px dashed var(--color-border-primary); border-radius: var(--radius-lg); cursor: pointer; color: var(--color-primary-600); font-weight: var(--font-weight-semibold); font-size: var(--font-size-sm);">
+                            <input type="radio" name="address_id" value="" {% if not default_address %}checked{% endif %} onchange="toggleNewAddressForm(true)">
+                            <span>+ {% trans "Enter a different delivery address" %}</span>
+                        </label>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- New Address Inputs -->
+                <div id="new-address-fields" style="{% if addresses and default_address %}display: none;{% endif %} display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-2);">
+                    <h3 style="font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); color: var(--color-text-secondary); margin: 0;">{% trans "Add New Address Details" %}</h3>
+
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);">{% trans "First Name" %} *</label>
+                            <input type="text" name="shipping_first_name" class="form-input" value="{{ user.first_name }}" placeholder="{% trans 'First Name' %}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);">{% trans "Last Name" %} *</label>
+                            <input type="text" name="shipping_last_name" class="form-input" value="{{ user.last_name }}" placeholder="{% trans 'Last Name' %}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);">{% trans "Contact Phone Number" %} *</label>
+                        <input type="tel" name="shipping_phone" class="form-input" value="{{ user.phone }}" placeholder="+91 98765 43210">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);">{% trans "Street Address / House No." %} *</label>
+                        <input type="text" name="shipping_address" class="form-input" placeholder="{% trans 'Flat, House no., Building, Apartment, Street' %}">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-3);">
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);">{% trans "City" %} *</label>
+                            <input type="text" name="shipping_city" class="form-input" placeholder="{% trans 'City' %}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);">{% trans "State" %} *</label>
+                            <input type="text" name="shipping_state" class="form-input" placeholder="{% trans 'State' %}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);">{% trans "Postal Code" %} *</label>
+                            <input type="text" name="shipping_postal_code" class="form-input" placeholder="{% trans 'PIN / Postal' %}">
+                        </div>
+                    </div>
+
+                    <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer; font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-1);">
+                        <input type="checkbox" name="save_address" value="1" checked class="form-checkbox">
+                        <span>{% trans "Save this address for future purchases" %}</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Payment Method -->
+            <section class="card" style="padding: var(--space-6);">
+                <h2 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0 0 var(--space-4) 0; display: flex; align-items: center; gap: var(--space-2);">
+                    <i data-lucide="credit-card" style="width: 20px; height: 20px; color: var(--color-primary-600);"></i>
+                    2. {% trans "Payment Method" %}
+                </h2>
+
+                <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                    <label style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-primary); border-radius: var(--radius-lg); cursor: pointer; background: var(--color-bg-secondary);">
+                        <input type="radio" name="payment_method" value="COD" checked>
+                        <div>
+                            <div style="font-weight: var(--font-weight-bold); font-size: var(--font-size-sm); color: var(--color-text-primary);">{% trans "Cash on Delivery (COD)" %}</div>
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">{% trans "Pay with cash or UPI upon delivery at your doorstep" %}</div>
+                        </div>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-primary); border-radius: var(--radius-lg); cursor: pointer; background: var(--color-bg-secondary);">
+                        <input type="radio" name="payment_method" value="UPI">
+                        <div>
+                            <div style="font-weight: var(--font-weight-bold); font-size: var(--font-size-sm); color: var(--color-text-primary);">{% trans "Instant UPI (Google Pay, PhonePe, Paytm)" %}</div>
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">{% trans "Fast & secure digital payment" %}</div>
+                        </div>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-primary); border-radius: var(--radius-lg); cursor: pointer; background: var(--color-bg-secondary);">
+                        <input type="radio" name="payment_method" value="NET_BANKING">
+                        <div>
+                            <div style="font-weight: var(--font-weight-bold); font-size: var(--font-size-sm); color: var(--color-text-primary);">{% trans "Net Banking" %}</div>
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">{% trans "All major Indian & international banks supported" %}</div>
+                        </div>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-primary); border-radius: var(--radius-lg); cursor: pointer; background: var(--color-bg-secondary);">
+                        <input type="radio" name="payment_method" value="CARD">
+                        <div>
+                            <div style="font-weight: var(--font-weight-bold); font-size: var(--font-size-sm); color: var(--color-text-primary);">{% trans "Credit / Debit Card (Marketplace Test Mode)" %}</div>
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">{% trans "Safe tokenized processing - no card numbers stored" %}</div>
+                        </div>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Delivery Instructions -->
+            <section class="card" style="padding: var(--space-6);">
+                <h2 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0 0 var(--space-3) 0;">
+                    3. {% trans "Delivery Instructions (Optional)" %}
+                </h2>
+                <textarea name="customer_notes" rows="2" class="form-textarea" placeholder="{% trans 'e.g. Leave with security guard, landmark near blue gate, etc.' %}"></textarea>
+            </section>
+        </div>
+
+        <!-- Right: Order Review -->
+        <div class="card" style="padding: var(--space-6); position: sticky; top: var(--space-4);">
+            <h3 style="font-size: var(--font-size-base); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin: 0 0 var(--space-4) 0; border-bottom: 1px solid var(--color-border-primary); padding-bottom: var(--space-3);">
+                {% trans "Order Summary" %} ({{ cart.total_items }} {% trans "items" %})
+            </h3>
+
+            <!-- Mini items preview -->
+            <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-5); max-height: 220px; overflow-y: auto; padding-right: var(--space-1);">
+                {% for item in items %}
+                <div style="display: flex; gap: var(--space-3); align-items: center;">
+                    <div style="width: 44px; height: 44px; border-radius: var(--radius-md); border: 1px solid var(--color-border-primary); background: var(--color-bg-secondary); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                        {% if item.product.images.first %}
+                            <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                        {% else %}
+                            <i data-lucide="package" style="width: 20px; height: 20px; color: var(--color-text-muted);"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1" style="min-width: 0;">
+                        <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ item.product.name }}
+                        </div>
+                        <div style="font-size: var(--font-size-2xs); color: var(--color-text-secondary);">
+                            Qty: {{ item.quantity }} × ₹{{ item.product.price }}
+                        </div>
+                    </div>
+                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); color: var(--color-text-primary);">
+                        ₹{{ item.total_price }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Price Breakdown -->
+            <div style="display: flex; flex-direction: column; gap: var(--space-1-5); font-size: var(--font-size-sm); border-top: 1px solid var(--color-bg-tertiary); padding-top: var(--space-3); margin-bottom: var(--space-5);">
+                <div style="display: flex; justify-content: space-between; color: var(--color-text-secondary);">
+                    <span>{% trans "Items Subtotal:" %}</span>
+                    <span style="font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">₹{{ subtotal }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: var(--color-text-secondary);">
+                    <span>{% trans "Shipping:" %}</span>
+                    <span>
+                        {% if shipping == 0 %}
+                        <span style="color: var(--color-success-600); font-weight: var(--font-weight-semibold);">{% trans "FREE" %}</span>
+                        {% else %}
+                        ₹{{ shipping }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: var(--color-text-secondary);">
+                    <span>{% trans "Estimated Tax (5%):" %}</span>
+                    <span>₹{{ tax }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-text-primary); border-top: 1px solid var(--color-border-primary); padding-top: var(--space-3); margin-top: var(--space-1-5);">
+                    <span>{% trans "Order Total:" %}</span>
+                    <span>₹{{ total }}</span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" style="background-color: var(--store-accent); color: var(--color-neutral-900); border: none; font-weight: var(--font-weight-bold); border-radius: var(--radius-lg);" id="btn-place-order">
+                <i data-lucide="shield-check" style="width: 20px; height: 20px; margin-right: var(--space-2);"></i>
+                {% trans "Place Your Order" %}
+            </button>
+
+            <div style="font-size: var(--font-size-2xs); color: var(--color-text-muted); text-align: center; margin-top: var(--space-3); line-height: var(--line-height-relaxed);">
+                {% trans "By placing your order, you agree to ShopSense Terms of Use and Privacy Notice." %}
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+function toggleNewAddressForm(show) {
+    var form = document.getElementById('new-address-fields');
+    if (form) {
+        form.style.display = show ? 'flex' : 'none';
+    }
+}
+</script>
+{% endblock %}

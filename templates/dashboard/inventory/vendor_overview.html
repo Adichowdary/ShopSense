@@ -1,0 +1,173 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} | ShopSense Vendor{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="h3 font-weight-bold text-gray-900 mb-1">{% trans "Vendor Inventory & Stock Health" %}</h1>
+            <p class="text-muted small mb-0">{% trans "Real-time stock monitoring, turnover velocity, and alerts for your authorized products." %}</p>
+        </div>
+        <div>
+            <span class="badge bg-primary px-3 py-2 fs-6">{{ vendor.business_name }} ({{ vendor.vendor_id }})</span>
+        </div>
+    </div>
+
+    <!-- Vendor KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card h-100 shadow-sm border-0 border-start border-4 border-primary">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase small font-weight-semibold">{% trans "Your Active Products" %}</span>
+                    <h3 class="font-weight-bold text-gray-900 mt-2 mb-0">{{ products.count }}</h3>
+                    <small class="text-muted">{% trans "Catalog listings owned by you" %}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card h-100 shadow-sm border-0 border-start border-4 border-success">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase small font-weight-semibold">{% trans "Total Inventory Units" %}</span>
+                    <h3 class="font-weight-bold text-gray-900 mt-2 mb-0">{{ total_stock }} <span class="small font-weight-normal text-muted">units</span></h3>
+                    <small class="text-muted">{% trans "Available in fulfillment centers" %}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card h-100 shadow-sm border-0 border-start border-4 border-info">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase small font-weight-semibold">{% trans "Catalog Inventory Value" %}</span>
+                    <h3 class="font-weight-bold text-gray-900 mt-2 mb-0">₹{{ total_value|floatformat:2 }}</h3>
+                    <small class="text-muted">{% trans "Retail valuation in INR" %}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Low-Stock Alerts -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <h5 class="card-title font-weight-bold mb-0">{% trans "Stock Alerts for Your Products" %}</h5>
+            <span class="badge {% if alerts.count > 0 %}bg-danger{% else %}bg-success{% endif %}">{{ alerts.count }} {% trans "Alerts" %}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-uppercase">
+                        <tr>
+                            <th>{% trans "Severity" %}</th>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "Condition" %}</th>
+                            <th>{% trans "Observed Stock" %}</th>
+                            <th>{% trans "Threshold" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th class="text-end">{% trans "Action" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in alerts %}
+                        <tr>
+                            <td>
+                                {% if alert.severity == 'CRITICAL' %}
+                                    <span class="badge bg-danger">CRITICAL</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">WARNING</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="font-weight-bold">{{ alert.product.name }}</div>
+                                <div class="small text-muted font-monospace">{{ alert.product.sku }}</div>
+                            </td>
+                            <td>{{ alert.get_alert_type_display }}</td>
+                            <td class="font-weight-bold text-danger">{{ alert.observed_stock }}</td>
+                            <td>{{ alert.threshold }}</td>
+                            <td>
+                                {% if alert.status == 'ACTIVE' %}
+                                    <span class="badge bg-danger-subtle text-danger">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary">Acknowledged</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if alert.status == 'ACTIVE' %}
+                                <form method="post" action="{% url 'inventory:acknowledge_alert' alert.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2">{% trans "Acknowledge" %}</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">{% trans "All your products have sufficient stock levels." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Product Turnover & Stock Table -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="card-title font-weight-bold mb-0">{% trans "Product Inventory & Sales Velocity" %}</h5>
+                <small class="text-muted">{% trans "Measured over the past 30 days" %}</small>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-uppercase">
+                        <tr>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "Unit Price" %}</th>
+                            <th>{% trans "Available Stock" %}</th>
+                            <th>{% trans "30d Units Sold" %}</th>
+                            <th>{% trans "Turnover Ratio" %}</th>
+                            <th>{% trans "Days of Inventory" %}</th>
+                            <th>{% trans "Velocity" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in turnover_table %}
+                        <tr>
+                            <td>
+                                <div class="font-weight-bold">{{ item.product.name }}</div>
+                                <div class="small text-muted font-monospace">{{ item.product.sku }}</div>
+                            </td>
+                            <td>₹{{ item.product.price|floatformat:2 }}</td>
+                            <td class="font-weight-bold">{{ item.metrics.current_stock }}</td>
+                            <td>{{ item.metrics.units_sold }}</td>
+                            <td class="font-weight-bold text-primary">{{ item.metrics.turnover_ratio }}</td>
+                            <td>{% if item.metrics.days_sales_of_inventory %}{{ item.metrics.days_sales_of_inventory }}d{% else %}&infin;{% endif %}</td>
+                            <td>
+                                {% if item.metrics.velocity_tier == 'FAST_MOVING' %}
+                                    <span class="badge bg-success">FAST MOVING</span>
+                                {% elif item.metrics.velocity_tier == 'MEDIUM_MOVING' %}
+                                    <span class="badge bg-info">MEDIUM MOVING</span>
+                                {% elif item.metrics.velocity_tier == 'SLOW_MOVING' %}
+                                    <span class="badge bg-warning text-dark">SLOW MOVING</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">NON MOVING</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">{% trans "No products listed." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

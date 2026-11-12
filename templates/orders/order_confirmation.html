@@ -1,0 +1,113 @@
+{% extends 'storefront/base_storefront.html' %}
+{% load static i18n %}
+
+{% block storefront_content %}
+<div style="max-width: 800px; margin: 20px auto 48px;">
+    <!-- Confirmation Banner -->
+    <div style="background: #ffffff; border-radius: 12px; border: 1px solid var(--store-border); padding: 32px; margin-bottom: 24px; text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background-color: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <i data-lucide="check" style="width: 36px; height: 36px;"></i>
+        </div>
+        <h1 style="font-size: 26px; font-weight: 800; color: #111827; margin: 0 0 8px 0;">
+            {% trans "Order Placed Successfully!" %}
+        </h1>
+        <p style="color: #4b5563; font-size: 15px; margin: 0 0 16px 0;">
+            {% trans "Thank you for shopping with ShopSense. A confirmation notification has been sent to" %} <strong>{{ order.email }}</strong>.
+        </p>
+        <div style="display: inline-block; background-color: #f3f4f6; padding: 8px 16px; border-radius: 8px; font-size: 14px;">
+            {% trans "Order Number:" %} <strong style="color: #2563eb; font-family: monospace;">{{ order.order_number }}</strong>
+        </div>
+    </div>
+
+    <!-- Order Details Card -->
+    <div style="background: #ffffff; border-radius: 12px; border: 1px solid var(--store-border); padding: 28px; margin-bottom: 24px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid #f3f4f6; margin-bottom: 20px;">
+            <div>
+                <h3 style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: #6b7280; margin: 0 0 8px 0;">
+                    {% trans "Shipping Address" %}
+                </h3>
+                <div style="font-weight: 700; color: #111827; font-size: 14px;">
+                    {{ order.shipping_first_name }} {{ order.shipping_last_name }}
+                </div>
+                <div style="font-size: 13px; color: #4b5563; margin-top: 2px;">
+                    {{ order.shipping_address }}, {{ order.shipping_city }}, {{ order.shipping_state }} - {{ order.shipping_postal_code }}
+                </div>
+                <div style="font-size: 13px; color: #4b5563; margin-top: 2px;">
+                    {{ order.shipping_country }}
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                    {% trans "Phone:" %} {{ order.phone }}
+                </div>
+            </div>
+
+            <div>
+                <h3 style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: #6b7280; margin: 0 0 8px 0;">
+                    {% trans "Order Info" %}
+                </h3>
+                <div style="font-size: 13px; color: #4b5563; display: flex; flex-direction: column; gap: 4px;">
+                    <div>{% trans "Status:" %} <span class="badge badge-success">{{ order.get_status_display }}</span></div>
+                    <div>{% trans "Placed on:" %} {{ order.created_at|date:"M d, Y H:i" }}</div>
+                    {% if order.payments.first %}
+                    <div>{% trans "Payment Method:" %} <strong>{{ order.payments.first.get_method_display }}</strong></div>
+                    <div>{% trans "Payment Status:" %} <strong>{{ order.payments.first.get_status_display }}</strong></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Ordered Items -->
+        <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin: 0 0 16px 0;">
+            {% trans "Items Ordered" %}
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+            {% for item in order.items.all %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #f9fafb;">
+                <div>
+                    <div style="font-weight: 700; font-size: 14px; color: #111827;">
+                        {{ item.product_name }}
+                    </div>
+                    <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">
+                        {% trans "Qty:" %} {{ item.quantity }} × ₹{{ item.unit_price }} • SKU: <code>{{ item.product_sku }}</code>
+                    </div>
+                </div>
+                <div style="font-weight: 700; font-size: 14px; color: #111827;">
+                    ₹{{ item.total_price }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Totals summary -->
+        <div style="background: #f9fafb; border-radius: 8px; padding: 16px; font-size: 14px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; color: #4b5563;">
+                <span>{% trans "Items Subtotal:" %}</span>
+                <span>₹{{ order.subtotal }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #4b5563;">
+                <span>{% trans "Shipping:" %}</span>
+                <span>{% if order.shipping_cost == 0 %}<strong style="color: #16a34a;">FREE</strong>{% else %}₹{{ order.shipping_cost }}{% endif %}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #4b5563;">
+                <span>{% trans "Tax:" %}</span>
+                <span>₹{{ order.tax_amount }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: #111827; border-top: 1px solid #e5e7eb; padding-top: 10px;">
+                <span>{% trans "Grand Total:" %}</span>
+                <span>₹{{ order.total }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 16px; justify-content: center;">
+        <a href="{% url 'orders:order_list' %}" class="btn btn-outline" style="padding: 12px 24px;">
+            <i data-lucide="package" style="width: 18px; height: 18px; margin-right: 6px;"></i>
+            {% trans "View Order History" %}
+        </a>
+        <a href="{% url 'store:home' %}" class="btn" style="background-color: var(--store-accent); color: #111827; font-weight: 700; padding: 12px 28px; border-radius: 8px; text-decoration: none;">
+            <i data-lucide="shopping-bag" style="width: 18px; height: 18px; margin-right: 6px;"></i>
+            {% trans "Continue Shopping" %}
+        </a>
+    </div>
+</div>
+{% endblock %}

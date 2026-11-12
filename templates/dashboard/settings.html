@@ -1,0 +1,22 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<div class="data-table-card">
+    <div class="card-header">
+        <h2 class="card-title">{% trans "Settings" %}</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <div class="alert-content">
+                <p class="alert-message">{% trans "Settings page is under development. Configuration options will be available here soon." %}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,456 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} | ShopSense Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="h3 font-weight-bold text-gray-900 mb-1">{% trans "Inventory & Intelligence Dashboard" %}</h1>
+            <p class="text-muted small mb-0">{% trans "Authoritative multi-warehouse stock monitoring, demand forecasting, and customer analytics." %}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:transfer_list' %}" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+                <i data-lucide="arrow-right-left" style="width: 16px; height: 16px;"></i>
+                {% trans "Warehouse Transfers" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Metric Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 shadow-sm border-0 border-start border-4 border-primary">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase small font-weight-semibold">{% trans "Active Products" %}</span>
+                    <h3 class="font-weight-bold text-gray-900 mt-2 mb-0">{{ total_products }}</h3>
+                    <small class="text-muted">{% trans "Catalog listings available" %}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 shadow-sm border-0 border-start border-4 border-success">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase small font-weight-semibold">{% trans "Total Stock on Hand" %}</span>
+                    <h3 class="font-weight-bold text-gray-900 mt-2 mb-0">{{ total_stock|default:"0" }} <span class="small font-weight-normal text-muted">units</span></h3>
+                    <small class="text-muted">{% trans "Across all active warehouses" %}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 shadow-sm border-0 border-start border-4 border-info">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase small font-weight-semibold">{% trans "Stock Valuation (INR)" %}</span>
+                    <h3 class="font-weight-bold text-gray-900 mt-2 mb-0">₹{{ stock_value|floatformat:2 }}</h3>
+                    <small class="text-muted">{% trans "Retail valuation of stock" %}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 shadow-sm border-0 border-start border-4 {% if active_alerts_count > 0 %}border-danger{% else %}border-secondary{% endif %}">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase small font-weight-semibold">{% trans "Active Alerts & Needs" %}</span>
+                    <h3 class="font-weight-bold {% if active_alerts_count > 0 %}text-danger{% else %}text-gray-900{% endif %} mt-2 mb-0">
+                        {{ active_alerts_count }} <span class="small font-weight-normal text-muted">alerts / {{ pending_replenishments_count }} reorders</span>
+                    </h3>
+                    <small class="text-muted">{% trans "Requires operator attention" %}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warehouse Network & Inventory Breakdown -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title font-weight-bold mb-0">{% trans "Warehouse Distribution" %}</h5>
+                    <span class="badge bg-light text-dark">{{ warehouses.count }} {% trans "Facilities" %}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small text-uppercase">
+                                <tr>
+                                    <th>{% trans "Warehouse" %}</th>
+                                    <th>{% trans "Location" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Stock Units" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for wh in warehouses %}
+                                <tr>
+                                    <td>
+                                        <div class="font-weight-bold">{{ wh.name }}</div>
+                                        <div class="small text-muted font-monospace">{{ wh.code }} {% if wh.is_default %}<span class="badge bg-primary text-white ms-1">DEFAULT</span>{% endif %}</div>
+                                    </td>
+                                    <td class="small">{{ wh.city|default:"-" }}, {{ wh.state|default:"-" }}</td>
+                                    <td>
+                                        {% if wh.status == 'ACTIVE' %}
+                                            <span class="badge bg-success-subtle text-success">{% trans "Active" %}</span>
+                                        {% elif wh.status == 'MAINTENANCE' %}
+                                            <span class="badge bg-warning-subtle text-warning">{% trans "Maintenance" %}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary-subtle text-secondary">{{ wh.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="font-weight-bold">{{ wh.total_units|default:0 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">{% trans "No warehouses configured yet." %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Replenishment Queue -->
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title font-weight-bold mb-0">{% trans "Replenishment Suggestions" %}</h5>
+                    <span class="badge bg-warning-subtle text-warning">{{ replenishments.count }} {% trans "Suggested" %}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small text-uppercase">
+                                <tr>
+                                    <th>{% trans "Product" %}</th>
+                                    <th>{% trans "Current / ROP" %}</th>
+                                    <th>{% trans "Suggested" %}</th>
+                                    <th class="text-end">{% trans "Action" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rep in replenishments %}
+                                <tr>
+                                    <td>
+                                        <div class="font-weight-bold">{{ rep.product.name }}</div>
+                                        <div class="small text-muted font-monospace">{{ rep.product.sku }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="text-danger font-weight-bold">{{ rep.observed_stock }}</span> / {{ rep.reorder_point }}
+                                    </td>
+                                    <td class="font-weight-bold text-primary">+{{ rep.suggested_quantity }}</td>
+                                    <td class="text-end">
+                                        <form method="post" action="{% url 'inventory:approve_replenishment' rep.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="approved_quantity" value="{{ rep.suggested_quantity }}">
+                                            <button type="submit" name="action" value="approve" class="btn btn-sm btn-success py-0 px-2" title="Approve">{% trans "Approve" %}</button>
+                                            <button type="submit" name="action" value="reject" class="btn btn-sm btn-outline-danger py-0 px-2" title="Reject">{% trans "Reject" %}</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">{% trans "All stock levels currently satisfy reorder point thresholds." %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Low-Stock Alerts -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <h5 class="card-title font-weight-bold mb-0">{% trans "Low-Stock & Stockout Alerts" %}</h5>
+            <span class="badge bg-danger-subtle text-danger">{{ alerts.count }} {% trans "Requiring Action" %}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-uppercase">
+                        <tr>
+                            <th>{% trans "Severity" %}</th>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "Type" %}</th>
+                            <th>{% trans "Observed Stock" %}</th>
+                            <th>{% trans "Threshold" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th class="text-end">{% trans "Action" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in alerts %}
+                        <tr>
+                            <td>
+                                {% if alert.severity == 'CRITICAL' %}
+                                    <span class="badge bg-danger">CRITICAL</span>
+                                {% elif alert.severity == 'WARNING' %}
+                                    <span class="badge bg-warning text-dark">WARNING</span>
+                                {% else %}
+                                    <span class="badge bg-info">INFO</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="font-weight-bold">{{ alert.product.name }}</div>
+                                <div class="small text-muted font-monospace">{{ alert.product.sku }}</div>
+                            </td>
+                            <td>{{ alert.get_alert_type_display }}</td>
+                            <td class="font-weight-bold text-danger">{{ alert.observed_stock }}</td>
+                            <td>{{ alert.threshold }}</td>
+                            <td>
+                                {% if alert.status == 'ACTIVE' %}
+                                    <span class="badge bg-danger-subtle text-danger">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary">Acknowledged</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if alert.status == 'ACTIVE' %}
+                                <form method="post" action="{% url 'inventory:acknowledge_alert' alert.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2">{% trans "Acknowledge" %}</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">{% trans "No active low-stock alerts. Inventory levels are healthy." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Turnover Analytics & Velocity -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="card-title font-weight-bold mb-0">{% trans "Inventory Turnover & Movement Velocity" %}</h5>
+                <small class="text-muted">{% trans "Turnover Ratio = Units Sold / Avg Inventory (30-day window)" %}</small>
+            </div>
+            <div class="small text-muted font-monospace">
+                {% trans "Overall Ratio:" %} <strong class="text-dark">{{ turnover_summary.turnover_ratio }}</strong> • {% trans "Units Sold:" %} <strong class="text-dark">{{ turnover_summary.units_sold }}</strong>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-uppercase">
+                        <tr>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "Units Sold (30d)" %}</th>
+                            <th>{% trans "Revenue (INR)" %}</th>
+                            <th>{% trans "Current Stock" %}</th>
+                            <th>{% trans "Turnover Ratio" %}</th>
+                            <th>{% trans "Days of Inventory (DSI)" %}</th>
+                            <th>{% trans "Velocity Tier" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in turnover_table %}
+                        <tr>
+                            <td>
+                                <div class="font-weight-bold">{{ item.product.name }}</div>
+                                <div class="small text-muted font-monospace">{{ item.product.sku }}</div>
+                            </td>
+                            <td class="font-weight-bold">{{ item.metrics.units_sold }}</td>
+                            <td>₹{{ item.metrics.revenue|floatformat:2 }}</td>
+                            <td>{{ item.metrics.current_stock }}</td>
+                            <td class="font-weight-bold text-primary">{{ item.metrics.turnover_ratio }}</td>
+                            <td>{% if item.metrics.days_sales_of_inventory %}{{ item.metrics.days_sales_of_inventory }}d{% else %}&infin;{% endif %}</td>
+                            <td>
+                                {% if item.metrics.velocity_tier == 'FAST_MOVING' %}
+                                    <span class="badge bg-success">FAST MOVING</span>
+                                {% elif item.metrics.velocity_tier == 'MEDIUM_MOVING' %}
+                                    <span class="badge bg-info">MEDIUM MOVING</span>
+                                {% elif item.metrics.velocity_tier == 'SLOW_MOVING' %}
+                                    <span class="badge bg-warning text-dark">SLOW MOVING</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">NON MOVING</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">{% trans "No qualifying sales records available for turnover calculation in this period." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forecasting & Customer Intelligence Section -->
+    <div class="row g-4 mb-4">
+        <!-- Demand Forecast -->
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title font-weight-bold mb-0">{% trans "Demand Forecasting (WAPE Validation)" %}</h5>
+                        <small class="text-muted">{% trans "Chronological holdout evaluation split" %}</small>
+                    </div>
+                    {% if latest_forecast_model %}
+                        <span class="badge bg-primary">{{ latest_forecast_model.model_type }} {{ latest_forecast_model.version }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if latest_forecast_model %}
+                        <div class="row g-2 mb-3 bg-light p-3 rounded">
+                            <div class="col-6">
+                                <span class="small text-muted text-uppercase">{% trans "Forecast Accuracy" %}</span>
+                                <div class="h5 font-weight-bold mb-0 text-success">
+                                    {% if latest_forecast_model.metrics.forecast_accuracy is not None %}
+                                        {{ latest_forecast_model.metrics.forecast_accuracy }}%
+                                    {% else %}
+                                        <span class="text-muted small">{% trans "Insufficient Demand" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <span class="small text-muted text-uppercase">{% trans "Measured WAPE" %}</span>
+                                <div class="h5 font-weight-bold mb-0 text-primary">
+                                    {% if latest_forecast_model.metrics.wape is not None %}
+                                        {{ latest_forecast_model.metrics.wape }}%
+                                    {% else %}
+                                        <span class="text-muted small">{% trans "Zero Demand Split" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="font-weight-bold small text-uppercase mb-2">{% trans "Next Daily Predictions" %}</h6>
+                        <ul class="list-group list-group-flush small">
+                            {% for pred in recent_predictions %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>{{ pred.prediction_date|date:"D, M d" }} ({{ pred.product.sku }})</span>
+                                <span class="font-weight-bold">{{ pred.predicted_demand }} units <small class="text-muted">[CI: {{ pred.lower_bound }}-{{ pred.upper_bound }}]</small></span>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item px-0 text-muted">{% trans "No upcoming predictions generated." %}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <p class="mb-0">{% trans "No trained forecast models yet. Run train_demand_forecasts management command." %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- RFM Customer Segments -->
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title font-weight-bold mb-0">{% trans "Customer RFM Segmentation" %}</h5>
+                        <small class="text-muted">{% trans "Recency, Frequency & Monetary Value clustering" %}</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 mb-3">
+                        {% for seg in segments %}
+                        <div class="col-6">
+                            <div class="border rounded p-2 text-center">
+                                <div class="small font-weight-bold text-truncate">{{ seg.name }}</div>
+                                <div class="h4 font-weight-bold text-primary mb-0">{{ seg.member_count }}</div>
+                                <small class="text-muted">{% trans "Customers" %}</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center py-3 text-muted">{% trans "No segments assigned yet." %}</div>
+                        {% endfor %}
+                    </div>
+
+                    <h6 class="font-weight-bold small text-uppercase mb-2">{% trans "Recent Customer Assignments" %}</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless small mb-0">
+                            <thead>
+                                <tr class="text-muted">
+                                    <th>{% trans "Customer" %}</th>
+                                    <th>{% trans "Segment" %}</th>
+                                    <th>{% trans "Recency" %}</th>
+                                    <th>{% trans "Spent" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assign in recent_segment_assignments %}
+                                <tr>
+                                    <td class="font-weight-bold text-truncate" style="max-width: 140px;">{{ assign.user.email }}</td>
+                                    <td><span class="badge bg-light text-dark">{{ assign.segment.name }}</span></td>
+                                    <td>{{ assign.recency_days }}d ago</td>
+                                    <td>₹{{ assign.monetary_value|floatformat:0 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">{% trans "No assignments recorded." %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Append-Only Movement Audit Ledger -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <h5 class="card-title font-weight-bold mb-0">{% trans "Append-Only Stock Movement Ledger" %}</h5>
+            <span class="badge bg-light text-dark font-monospace">{% trans "Immutable Audit Trail" %}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-uppercase">
+                        <tr>
+                            <th>{% trans "Timestamp" %}</th>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "Facility" %}</th>
+                            <th>{% trans "Type" %}</th>
+                            <th>{% trans "Change" %}</th>
+                            <th>{% trans "Reason / Notes" %}</th>
+                            <th>{% trans "Actor" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mov in recent_movements %}
+                        <tr>
+                            <td class="small font-monospace">{{ mov.timestamp|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <div class="font-weight-bold">{{ mov.product.name }}</div>
+                                <div class="small text-muted font-monospace">{{ mov.product.sku }}</div>
+                            </td>
+                            <td>{{ mov.warehouse.code|default:"-" }}</td>
+                            <td><span class="badge bg-light text-dark">{{ mov.movement_type }}</span></td>
+                            <td class="font-weight-bold {% if mov.quantity_change > 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if mov.quantity_change > 0 %}+{% endif %}{{ mov.quantity_change }}
+                            </td>
+                            <td class="small text-muted">{{ mov.reason }}</td>
+                            <td class="small">{{ mov.performed_by.email|default:"System" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">{% trans "No ledger movements logged yet." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

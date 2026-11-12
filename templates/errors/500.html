@@ -1,0 +1,37 @@
+﻿{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Server Error" %} - ShopSense{% endblock %}
+
+{% block body_class %}error-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="login-container" style="max-width: 400px;">
+    <div class="login-card" style="max-width: none; text-align: center;">
+        <div class="success-state">
+            <div class="success-icon" style="background-color: var(--color-error-50); color: var(--color-error-600);">
+                <i data-lucide="alert-triangle" style="width: 40px; height: 40px;"></i>
+            </div>
+            <h1 style="font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin-bottom: var(--space-2);">500</h1>
+            <h2 class="success-title">{% trans "Server Error" %}</h2>
+            <p class="success-message">{% trans "Something went wrong on our end. Our team has been notified and we're working to fix it." %}</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+            <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-primary btn-block">
+                <i data-lucide="refresh-cw" class="btn-icon"></i>
+                {% trans "Try Again" %}
+            </a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline btn-block">
+                <i data-lucide="home" class="btn-icon"></i>
+                {% trans "Go Home" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

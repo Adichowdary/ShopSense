@@ -1,0 +1,75 @@
+﻿{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<div style="max-width: 720px;">
+    <div class="data-table-card">
+        <div class="card-header">
+            <h2 class="card-title">{% trans "My Profile" %}</h2>
+            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline btn-sm">
+                <i data-lucide="edit" class="btn-icon"></i>
+                {% trans "Edit Profile" %}
+            </a>
+        </div>
+        <div class="card-body">
+            <div style="display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6); padding-bottom: var(--space-6); border-bottom: 1px solid var(--color-border);">
+                <div class="avatar avatar-xl" style="background-color: var(--color-primary-600);">
+                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                </div>
+                <div>
+                    <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); margin: 0;">{{ user.get_full_name|default:"-" }}</h3>
+                    <p style="margin: var(--space-1) 0 0; color: var(--color-text-secondary);">{{ user.email }}</p>
+                    <span class="badge {% if user.role == 'ADMIN' %}badge-primary{% elif user.role == 'VENDOR' %}badge-warning{% else %}badge-neutral{% endif %}" style="margin-top: var(--space-2); font-size: var(--font-size-xs);">
+                        {{ user.get_role_display }}
+                    </span>
+                </div>
+            </div>
+
+            <dl style="display: grid; grid-template-columns: 180px 1fr; gap: var(--space-3) var(--space-6);">
+                <dt>{% trans "First Name" %}</dt>
+                <dd>{{ user.first_name|default:"-" }}</dd>
+
+                <dt>{% trans "Last Name" %}</dt>
+                <dd>{{ user.last_name|default:"-" }}</dd>
+
+                <dt>{% trans "Email" %}</dt>
+                <dd>{{ user.email }}</dd>
+
+                <dt>{% trans "Phone" %}</dt>
+                <dd>{{ user.phone|default:"-" }}</dd>
+
+                <dt>{% trans "Role" %}</dt>
+                <dd>{{ user.get_role_display }}</dd>
+
+                <dt>{% trans "Status" %}</dt>
+                <dd>
+                    <span class="badge {% if user.is_active %}badge-success{% else %}badge-error{% endif %}">
+                        {% if user.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                    </span>
+                </dd>
+
+                <dt>{% trans "Date Joined" %}</dt>
+                <dd>{{ user.date_joined|date:"M d, Y H:i" }}</dd>
+
+                <dt>{% trans "Last Login" %}</dt>
+                <dd>{{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</dd>
+
+                <dt>{% trans "Last Login IP" %}</dt>
+                <dd>{{ user.last_login_ip|default:"-" }}</dd>
+            </dl>
+
+            <div style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--color-border); display: flex; gap: var(--space-3); flex-wrap: wrap;">
+                <a href="{% url 'accounts:password_change' %}" class="btn btn-outline">
+                    <i data-lucide="key" class="btn-icon"></i>
+                    {% trans "Change Password" %}
+                </a>
+                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+                    <i data-lucide="edit" class="btn-icon"></i>
+                    {% trans "Edit Profile" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

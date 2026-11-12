@@ -1,0 +1,375 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/vendor-admin.css' %}">
+{% endblock %}
+
+{% block page_content %}
+<!-- Dashboard Header -->
+<div class="va-header">
+    <div class="va-header-title">
+        <div class="va-title-icon">
+            <i data-lucide="shield-check" style="width: 24px; height: 24px;"></i>
+        </div>
+        <div>
+            <h1>{% trans "Vendor Registrations" %}</h1>
+            <p>{% trans "Review, verify, and approve seller applications across the marketplace" %}</p>
+        </div>
+    </div>
+    <div class="va-header-actions">
+        <button type="button" class="btn btn-outline" id="copyOnboardLinkBtn" onclick="copyOnboardLink()">
+            <i data-lucide="link" class="btn-icon"></i>
+            <span id="copyLinkText">{% trans "Copy Registration Link" %}</span>
+        </button>
+        <a href="{% url 'vendors:onboarding' %}" class="btn btn-primary" target="_blank" rel="noopener">
+            <i data-lucide="plus" class="btn-icon"></i>
+            {% trans "New Onboarding Application" %}
+        </a>
+    </div>
+</div>
+
+<!-- Interactive KPI Stat Cards -->
+<div class="va-kpi-grid">
+    <!-- Total Applicants -->
+    <a href="{% url 'dashboard:vendor_applications' %}" class="va-kpi-card {% if not current_status %}active-filter{% endif %}" title="{% trans 'View all applications' %}">
+        <div class="va-kpi-header">
+            <span class="va-kpi-label">{% trans "Total Applications" %}</span>
+            <div class="va-kpi-icon primary">
+                <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <div class="va-kpi-value">{{ stats.total|default:0 }}</div>
+        <div class="va-kpi-subtext">
+            <span>{% trans "All time seller submissions" %}</span>
+        </div>
+    </a>
+
+    <!-- Pending Review (Urgent) -->
+    <a href="{% url 'dashboard:vendor_applications' %}?status=PENDING" class="va-kpi-card {% if current_status == 'PENDING' %}active-filter{% endif %}" title="{% trans 'View pending applications' %}">
+        <div class="va-kpi-header">
+            <span class="va-kpi-label">{% trans "Pending Review" %}</span>
+            <div class="va-kpi-icon warning">
+                <i data-lucide="clock" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <div class="va-kpi-value" style="color: #d97706;">
+            {{ stats.pending|default:0 }}
+        </div>
+        <div class="va-kpi-subtext">
+            {% if stats.pending > 0 %}
+            <span class="va-pulse-dot"></span>
+            <strong style="color: #d97706;">{% trans "Requires immediate review" %}</strong>
+            {% else %}
+            <span>{% trans "All caught up" %}</span>
+            {% endif %}
+        </div>
+    </a>
+
+    <!-- Approved Vendors -->
+    <a href="{% url 'dashboard:vendor_applications' %}?status=APPROVED" class="va-kpi-card {% if current_status == 'APPROVED' %}active-filter{% endif %}" title="{% trans 'View approved applications' %}">
+        <div class="va-kpi-header">
+            <span class="va-kpi-label">{% trans "Approved" %}</span>
+            <div class="va-kpi-icon success">
+                <i data-lucide="check-circle-2" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <div class="va-kpi-value" style="color: #16a34a;">{{ stats.approved|default:0 }}</div>
+        <div class="va-kpi-subtext">
+            <span>{% trans "Active seller accounts" %}</span>
+        </div>
+    </a>
+
+    <!-- Needs More Info -->
+    <a href="{% url 'dashboard:vendor_applications' %}?status=MORE_INFO" class="va-kpi-card {% if current_status == 'MORE_INFO' %}active-filter{% endif %}" title="{% trans 'View applications waiting on vendor' %}">
+        <div class="va-kpi-header">
+            <span class="va-kpi-label">{% trans "More Info Needed" %}</span>
+            <div class="va-kpi-icon info">
+                <i data-lucide="help-circle" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <div class="va-kpi-value" style="color: #0284c7;">{{ stats.more_info|default:0 }}</div>
+        <div class="va-kpi-subtext">
+            <span>{% trans "Awaiting seller reply" %}</span>
+        </div>
+    </a>
+
+    <!-- Rejected -->
+    <a href="{% url 'dashboard:vendor_applications' %}?status=REJECTED" class="va-kpi-card {% if current_status == 'REJECTED' %}active-filter{% endif %}" title="{% trans 'View rejected applications' %}">
+        <div class="va-kpi-header">
+            <span class="va-kpi-label">{% trans "Rejected" %}</span>
+            <div class="va-kpi-icon error">
+                <i data-lucide="x-circle" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <div class="va-kpi-value" style="color: #dc2626;">{{ stats.rejected|default:0 }}</div>
+        <div class="va-kpi-subtext">
+            <span>{% trans "Declined applications" %}</span>
+        </div>
+    </a>
+</div>
+
+<!-- Filter Tabs & Real-time Search -->
+<div class="va-control-panel">
+    <!-- Status Segment Tabs -->
+    <div class="va-tabs-row" role="tablist">
+        <a href="{% url 'dashboard:vendor_applications' %}{% if search_query %}?search={{ search_query }}{% endif %}" class="va-tab-pill {% if not current_status %}active{% endif %}">
+            <span>{% trans "All Applications" %}</span>
+            <span class="va-tab-count">{{ stats.total|default:0 }}</span>
+        </a>
+        <a href="{% url 'dashboard:vendor_applications' %}?status=PENDING{% if search_query %}&search={{ search_query }}{% endif %}" class="va-tab-pill {% if current_status == 'PENDING' %}active{% endif %}">
+            <span>{% trans "Pending" %}</span>
+            <span class="va-tab-count" style="background-color: {% if current_status == 'PENDING' %}rgba(255,255,255,0.3){% else %}#fef3c7{% endif %}; color: {% if current_status == 'PENDING' %}#fff{% else %}#b45309{% endif %};">{{ stats.pending|default:0 }}</span>
+        </a>
+        <a href="{% url 'dashboard:vendor_applications' %}?status=APPROVED{% if search_query %}&search={{ search_query }}{% endif %}" class="va-tab-pill {% if current_status == 'APPROVED' %}active{% endif %}">
+            <span>{% trans "Approved" %}</span>
+            <span class="va-tab-count" style="background-color: {% if current_status == 'APPROVED' %}rgba(255,255,255,0.3){% else %}#dcfce7{% endif %}; color: {% if current_status == 'APPROVED' %}#fff{% else %}#15803d{% endif %};">{{ stats.approved|default:0 }}</span>
+        </a>
+        <a href="{% url 'dashboard:vendor_applications' %}?status=MORE_INFO{% if search_query %}&search={{ search_query }}{% endif %}" class="va-tab-pill {% if current_status == 'MORE_INFO' %}active{% endif %}">
+            <span>{% trans "More Info Needed" %}</span>
+            <span class="va-tab-count">{{ stats.more_info|default:0 }}</span>
+        </a>
+        <a href="{% url 'dashboard:vendor_applications' %}?status=REJECTED{% if search_query %}&search={{ search_query }}{% endif %}" class="va-tab-pill {% if current_status == 'REJECTED' %}active{% endif %}">
+            <span>{% trans "Rejected" %}</span>
+            <span class="va-tab-count">{{ stats.rejected|default:0 }}</span>
+        </a>
+    </div>
+
+    <!-- Search Input Form -->
+    <form method="get" class="va-search-form" action="{% url 'dashboard:vendor_applications' %}">
+        {% if current_status %}
+        <input type="hidden" name="status" value="{{ current_status }}">
+        {% endif %}
+        <div class="va-search-input-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="search" name="search" class="va-search-input" placeholder="{% trans 'Search by business name, email, or vendor ID (e.g. VND12345)...' %}" value="{{ search_query }}">
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i data-lucide="search" class="btn-icon"></i>
+            {% trans "Search" %}
+        </button>
+        {% if search_query or current_status %}
+        <a href="{% url 'dashboard:vendor_applications' %}" class="btn btn-outline" title="{% trans 'Reset filters' %}">
+            <i data-lucide="rotate-ccw" class="btn-icon"></i>
+            {% trans "Reset" %}
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Applications Data Table Card -->
+<div class="va-table-card">
+    {% if applications %}
+    <div style="overflow-x: auto;">
+        <table class="va-table" role="table">
+            <thead>
+                <tr>
+                    <th scope="col">{% trans "Vendor & Business" %}</th>
+                    <th scope="col">{% trans "Contact" %}</th>
+                    <th scope="col">{% trans "Location & Tax ID" %}</th>
+                    <th scope="col">{% trans "Status" %}</th>
+                    <th scope="col">{% trans "Submitted" %}</th>
+                    <th scope="col" style="text-align: right;">{% trans "Review Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for application in applications %}
+                <tr>
+                    <!-- Vendor & Business Info -->
+                    <td>
+                        <div class="va-vendor-cell">
+                            <div class="va-avatar">
+                                {% if application.logo %}
+                                <img src="{{ application.logo.url }}" alt="{{ application.business_name }}">
+                                {% else %}
+                                <span>{{ application.business_name|slice:":2"|upper }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="va-vendor-info">
+                                <a href="{% url 'dashboard:vendor_application_detail' application.pk %}" class="va-vendor-name hover:text-indigo-600">
+                                    {{ application.business_name }}
+                                </a>
+                                <span class="va-vendor-id-chip" onclick="copyToClipboard('{{ application.vendor_id }}', this)" title="{% trans 'Click to copy Vendor ID' %}">
+                                    <code>{{ application.vendor_id }}</code>
+                                    <i data-lucide="copy" style="width: 11px; height: 11px;"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Contact -->
+                    <td>
+                        <div>
+                            <a href="mailto:{{ application.contact_email }}" class="text-sm font-semibold hover:underline" style="color: var(--color-primary-600);">
+                                {{ application.contact_email }}
+                            </a>
+                            <div style="font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px;">
+                                {% if application.contact_phone %}
+                                <i data-lucide="phone" style="width: 11px; height: 11px; display: inline-block; vertical-align: middle;"></i>
+                                {{ application.contact_phone }}
+                                {% else %}
+                                <span style="opacity: 0.6;">{% trans "No phone provided" %}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Location & Tax ID -->
+                    <td>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--color-text-primary);">
+                            {{ application.city|default:"-" }}{% if application.state %}, {{ application.state }}{% endif %}
+                        </div>
+                        <div style="font-size: 11px; color: var(--color-text-tertiary); font-family: monospace; margin-top: 2px;">
+                            {% if application.tax_id %}
+                            GST/PAN: <strong>{{ application.tax_id }}</strong>
+                            {% else %}
+                            <span style="opacity: 0.5;">-</span>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <!-- Status -->
+                    <td>
+                        {% if application.status == 'PENDING' %}
+                        <span class="va-badge va-badge-pending">
+                            <span class="va-pulse-dot" style="width: 6px; height: 6px;"></span>
+                            {% trans "Pending Review" %}
+                        </span>
+                        {% elif application.status == 'APPROVED' %}
+                        <span class="va-badge va-badge-approved">
+                            <span class="va-dot"></span>
+                            {% trans "Approved" %}
+                        </span>
+                        {% elif application.status == 'REJECTED' %}
+                        <span class="va-badge va-badge-rejected">
+                            <span class="va-dot"></span>
+                            {% trans "Rejected" %}
+                        </span>
+                        {% elif application.status == 'MORE_INFO' %}
+                        <span class="va-badge va-badge-more_info">
+                            <span class="va-dot"></span>
+                            {% trans "Needs Info" %}
+                        </span>
+                        {% else %}
+                        <span class="badge badge-neutral">{{ application.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Submitted Time -->
+                    <td>
+                        <div style="font-size: 13px; font-weight: 500;">
+                            {{ application.submitted_at|date:"M d, Y" }}
+                        </div>
+                        <div style="font-size: 11px; color: var(--color-text-tertiary);">
+                            {{ application.submitted_at|date:"h:i A" }}
+                        </div>
+                    </td>
+
+                    <!-- Actions -->
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                            <a href="{% url 'dashboard:vendor_application_detail' application.pk %}" class="btn btn-primary btn-sm" style="font-size: 12px; padding: 6px 14px;">
+                                <i data-lucide="file-search" class="btn-icon"></i>
+                                {% trans "Review Application" %}
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if applications.has_other_pages %}
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-6); border-top: 1px solid var(--color-border-primary); flex-wrap: wrap; gap: var(--space-3);">
+        <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+            {% trans "Showing" %} {{ applications.start_index }}–{{ applications.end_index }} {% trans "of" %} {{ applications.paginator.count }} {% trans "vendor applications" %}
+        </div>
+        <nav class="pagination" aria-label="Pagination">
+            {% if applications.has_previous %}
+            <a href="?page={{ applications.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}" class="pagination-link" aria-label="Previous">
+                <i data-lucide="chevron-left" style="width: 16px; height: 16px;"></i>
+            </a>
+            {% endif %}
+
+            {% for num in applications.paginator.page_range %}
+                {% if applications.number == num %}
+                <span class="pagination-link active" aria-current="page">{{ num }}</span>
+                {% elif num > applications.number|add:'-3' and num < applications.number|add:'3' %}
+                <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}" class="pagination-link">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if applications.has_next %}
+            <a href="?page={{ applications.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}" class="pagination-link" aria-label="Next">
+                <i data-lucide="chevron-right" style="width: 16px; height: 16px;"></i>
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="va-empty-state">
+        <div class="va-empty-icon">
+            <i data-lucide="file-question" style="width: 32px; height: 32px;"></i>
+        </div>
+        <h3 class="va-empty-title">{% trans "No Vendor Applications Found" %}</h3>
+        <p class="va-empty-desc">
+            {% if search_query or current_status %}
+            {% trans "No applications match your active filters. Try resetting search parameters or changing status filter." %}
+            {% else %}
+            {% trans "No vendor applications have been submitted yet. Share the registration link to onboard sellers." %}
+            {% endif %}
+        </p>
+        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center;">
+            {% if search_query or current_status %}
+            <a href="{% url 'dashboard:vendor_applications' %}" class="btn btn-outline">
+                <i data-lucide="rotate-ccw" class="btn-icon"></i>
+                {% trans "Clear Filters" %}
+            </a>
+            {% endif %}
+            <a href="{% url 'vendors:onboarding' %}" class="btn btn-primary" target="_blank">
+                <i data-lucide="external-link" class="btn-icon"></i>
+                {% trans "Open Onboarding Form" %}
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copyToClipboard(text, el) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalHtml = el.innerHTML;
+            el.innerHTML = '<code>Copied!</code> <i data-lucide="check" style="width: 11px; height: 11px; color: #16a34a;"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => {
+                el.innerHTML = originalHtml;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }, 1800);
+        });
+    }
+
+    function copyOnboardLink() {
+        const url = window.location.origin + "{% url 'vendors:onboarding' %}";
+        navigator.clipboard.writeText(url).then(() => {
+            const btnText = document.getElementById('copyLinkText');
+            if (btnText) {
+                const old = btnText.textContent;
+                btnText.textContent = "{% trans 'Link Copied to Clipboard!' %}";
+                setTimeout(() => {
+                    btnText.textContent = old;
+                }, 2000);
+            }
+        });
+    }
+</script>
+{% endblock %}

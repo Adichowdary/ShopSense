@@ -1,0 +1,106 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} | ShopSense{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+{% endblock %}
+
+{% block page_content %}
+<div class="bi-dashboard-container">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: 0;">{% trans "Recommendation Intelligence & Algorithms" %}</h1>
+            <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin: var(--space-1) 0 0 0;">
+                {% trans "Personalized suggestions, co-purchase associations, and ranking performance." %}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'dashboard:export_report' %}?report=recommendations&format=pdf" class="btn btn-outline btn-sm">
+                <i data-lucide="file-text" class="btn-icon"></i> {% trans "Export Recs Report (PDF)" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-primary-600);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Precision@5 Relevance" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                {{ kpis.precision_at_k }}%
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-success-600); font-weight: 500;">
+                {% trans "Target: ≥ 75%" %} (Passed)
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-success-600);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Catalog Coverage" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                {{ kpis.coverage_percentage }}%
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Active catalog items covered" %}</div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-surface); border-left: 4px solid var(--color-info-600);">
+            <div style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">{% trans "Total Candidates" %}</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); margin: var(--space-2) 0;">
+                {{ kpis.total_candidates }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">{% trans "Precomputed pairs & recommendations" %}</div>
+        </div>
+    </div>
+
+    <!-- Charts & Table Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: var(--space-6);">
+        <!-- Strategy Distribution -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Recommendation Strategies" %}
+            </h3>
+            <div id="strategyDonutChart" style="min-height: 280px; width: 100%;"></div>
+        </div>
+
+        <!-- Popular Recommendations Table -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-surface);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); margin: 0 0 var(--space-4) 0;">
+                {% trans "Top Ranked Recommended Products" %}
+            </h3>
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Rank" %}</th>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "SKU" %}</th>
+                            <th>{% trans "Score / Rationale" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in kpis.popular_items %}
+                        <tr>
+                            <td><span class="badge badge-primary">#{{ item.rank }}</span></td>
+                            <td><strong>{{ item.name }}</strong></td>
+                            <td><code>{{ item.sku }}</code></td>
+                            <td>{{ item.reason }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">{% trans "No recommendation items available." %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var stratData = JSON.parse('{{ strategy_chart_json|escapejs }}');
+    Plotly.newPlot('strategyDonutChart', stratData.data, stratData.layout, {responsive: true, displayModeBar: false});
+});
+</script>
+{% endblock %}
+

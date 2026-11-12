@@ -1,0 +1,87 @@
+﻿{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Application Submitted" %} - ShopSense{% endblock %}
+
+{% block body_class %}vendor-onboarding-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<link rel="stylesheet" href="{% static 'css/vendor-onboarding.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="onboarding-page">
+    <main class="onboarding-main">
+        <div class="onboarding-container">
+            <div class="onboarding-form-wrapper">
+                <div class="onboarding-card success-card">
+                    <div class="success-state">
+                        <div class="success-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </div>
+                        <h2 class="success-title">{% trans "Application Submitted!" %}</h2>
+                        <p class="success-message">{% trans "Thank you for applying to become a vendor on ShopSense. We've received your application and will review it shortly." %}</p>
+                    </div>
+
+                    <div class="details-card">
+                        <h3 class="details-title">{% trans "Your Application Details" %}</h3>
+                        <dl class="details-grid">
+                            <dt>{% trans "Vendor ID" %}</dt>
+                            <dd><code>{{ vendor_id }}</code></dd>
+
+                            <dt>{% trans "Business Name" %}</dt>
+                            <dd>{{ business_name }}</dd>
+
+                            <dt>{% trans "Contact Email" %}</dt>
+                            <dd>{{ contact_email }}</dd>
+
+                            <dt>{% trans "Submitted" %}</dt>
+                            <dd>{{ submitted_at|date:"M d, Y H:i" }}</dd>
+
+                            <dt>{% trans "Status" %}</dt>
+                            <dd>
+                                <span class="badge badge-warning">{% trans "Pending Review" %}</span>
+                            </dd>
+                        </dl>
+                    </div>
+
+                    <div class="success-actions">
+                        <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg btn-block">
+                            <svg class="btn-icon" data-lucide="log-in" aria-hidden="true"></svg>
+                            {% trans "Sign In to Check Status" %}
+                        </a>
+                        <p class="success-note">{% trans "We'll send you an email at" %} {{ contact_email }} {% trans "once your application is reviewed." %}</p>
+                    </div>
+                </div>
+
+                <aside class="next-steps-sidebar">
+                    <h3 class="next-steps-title">{% trans "What Happens Next?" %}</h3>
+                    <ol class="next-steps-list">
+                        <li>
+                            <span class="step-number">1</span>
+                            <span>{% trans "Our team reviews your application (3-5 business days)" %}</span>
+                        </li>
+                        <li>
+                            <span class="step-number">2</span>
+                            <span>{% trans "You receive an email with the decision" %}</span>
+                        </li>
+                        <li>
+                            <span class="step-number">3</span>
+                            <span>{% trans "If approved, you get vendor dashboard access" %}</span>
+                        </li>
+                        <li>
+                            <span class="step-number">4</span>
+                            <span>{% trans "Start adding products and selling!" %}</span>
+                        </li>
+                    </ol>
+                </aside>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/main.js' %}"></script>
+{% endblock %}

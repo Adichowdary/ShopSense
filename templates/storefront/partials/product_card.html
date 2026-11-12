@@ -1,0 +1,41 @@
+{% load static i18n %}
+{# Product card partial #}
+{# Usage: {% include 'storefront/partials/product_card.html' with product=product show_add_to_cart=True %} #}
+<div class="product-card">
+    <a href="{% url 'store:product_detail' product.pk %}" class="product-card-img-wrap" aria-label="{% trans 'View product' %} {{ product.name }}">
+        {% if product.images.first %}
+            <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-img" loading="lazy">
+        {% else %}
+            <div class="skeleton skeleton-avatar" style="width: 48px; height: 48px; margin: 0 auto;"></div>
+        {% endif %}
+        {% if product.compare_at_price and product.compare_at_price > product.price %}
+        <span class="product-deal-badge">{% trans "DEAL" %}</span>
+        {% endif %}
+    </a>
+    <div class="product-card-body">
+        <span class="product-category-tag">{{ product.category.name|default:"General" }}</span>
+        <a href="{% url 'store:product_detail' product.pk %}" style="text-decoration: none;">
+            <h3 class="product-title">{{ product.name }}</h3>
+        </a>
+        <div style="font-size: var(--font-size-2xs); color: var(--color-text-muted); margin-bottom: var(--space-2);">
+            {% trans "Sold by" %} <strong>{{ product.vendor.business_name }}</strong>
+        </div>
+        <div class="product-price-row">
+            <span class="product-price">₹{{ product.price }}</span>
+            {% if product.compare_at_price and product.compare_at_price > product.price %}
+            <span class="product-compare-price">₹{{ product.compare_at_price }}</span>
+            {% endif %}
+        </div>
+        {% if show_add_to_cart %}
+        <form action="{% url 'orders:cart_add' %}" method="post" style="margin-top: var(--space-3);">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ product.pk }}">
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" class="btn btn-primary btn-block" style="justify-content: center; font-weight: var(--font-weight-bold); border-radius: var(--radius-lg); padding: var(--space-2-5); font-size: var(--font-size-sm);">
+                <i data-lucide="shopping-cart" style="width: 16px; height: 16px; margin-right: var(--space-1-5);"></i>
+                {% trans "Add to Cart" %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>

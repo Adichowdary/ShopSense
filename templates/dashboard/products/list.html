@@ -1,0 +1,345 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<!-- Product Statistics Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+    <div class="data-table-card" style="padding: var(--space-4);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <p style="margin: 0; font-size: var(--font-size-xs); color: var(--color-text-secondary); text-transform: uppercase; font-weight: var(--font-weight-medium); letter-spacing: 0.05em;">
+                    {% trans "Total Products" %}
+                </p>
+                <h3 style="margin: var(--space-1) 0 0 0; font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary);">
+                    {{ stats.total }}
+                </h3>
+            </div>
+            <div style="width: 44px; height: 44px; border-radius: var(--radius-lg); background-color: var(--color-primary-50); color: var(--color-primary-600); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="package" style="width: 22px; height: 22px;" aria-hidden="true"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="data-table-card" style="padding: var(--space-4);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <p style="margin: 0; font-size: var(--font-size-xs); color: var(--color-text-secondary); text-transform: uppercase; font-weight: var(--font-weight-medium); letter-spacing: 0.05em;">
+                    {% trans "Active" %}
+                </p>
+                <h3 style="margin: var(--space-1) 0 0 0; font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-success-600);">
+                    {{ stats.active }}
+                </h3>
+            </div>
+            <div style="width: 44px; height: 44px; border-radius: var(--radius-lg); background-color: var(--color-success-50); color: var(--color-success-600); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="check-circle" style="width: 22px; height: 22px;" aria-hidden="true"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="data-table-card" style="padding: var(--space-4);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <p style="margin: 0; font-size: var(--font-size-xs); color: var(--color-text-secondary); text-transform: uppercase; font-weight: var(--font-weight-medium); letter-spacing: 0.05em;">
+                    {% trans "Drafts" %}
+                </p>
+                <h3 style="margin: var(--space-1) 0 0 0; font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-warning-600);">
+                    {{ stats.draft }}
+                </h3>
+            </div>
+            <div style="width: 44px; height: 44px; border-radius: var(--radius-lg); background-color: var(--color-warning-50); color: var(--color-warning-600); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="edit-3" style="width: 22px; height: 22px;" aria-hidden="true"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="data-table-card" style="padding: var(--space-4);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <p style="margin: 0; font-size: var(--font-size-xs); color: var(--color-text-secondary); text-transform: uppercase; font-weight: var(--font-weight-medium); letter-spacing: 0.05em;">
+                    {% trans "Out of Stock" %}
+                </p>
+                <h3 style="margin: var(--space-1) 0 0 0; font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-error-600);">
+                    {{ stats.out_of_stock }}
+                </h3>
+            </div>
+            <div style="width: 44px; height: 44px; border-radius: var(--radius-lg); background-color: var(--color-error-50); color: var(--color-error-600); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="alert-triangle" style="width: 22px; height: 22px;" aria-hidden="true"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="data-table-card">
+    <div class="card-header">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+                <h2 class="card-title">{% trans "Products" %}</h2>
+                <p style="margin: var(--space-1) 0 0 0; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                    {% trans "Manage catalog listings, pricing, and real-time inventory" %}
+                </p>
+            </div>
+            <div style="display: flex; gap: var(--space-3); align-items: center;">
+                <a href="{% url 'dashboard:product_create' %}" class="btn btn-primary" id="btn-create-product">
+                    <i data-lucide="plus" class="btn-icon" aria-hidden="true"></i>
+                    {% trans "Add Product" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters Form -->
+        <div class="card-body" style="padding-top: var(--space-4); padding-bottom: 0;">
+            <form method="get" class="flex flex-wrap gap-3" style="align-items: flex-end;">
+                <!-- Search input -->
+                <div style="flex: 2; min-width: 240px;">
+                    <label for="id_search" class="form-label visually-hidden">{% trans "Search products" %}</label>
+                    <div class="input-group">
+                        <span class="input-group-text" aria-hidden="true">
+                            <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+                        </span>
+                        <input type="search" name="search" id="id_search" class="form-input" 
+                               placeholder="{% trans 'Search by product name, SKU, or description...' %}" 
+                               value="{{ search_query }}" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div style="min-width: 150px; flex: 1;">
+                    <label for="id_status" class="form-label visually-hidden">{% trans "Status" %}</label>
+                    <select name="status" id="id_status" class="form-select">
+                        <option value="">{% trans "All Statuses" %}</option>
+                        {% for val, label in status_choices %}
+                        <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Category Filter -->
+                <div style="min-width: 160px; flex: 1;">
+                    <label for="id_category" class="form-label visually-hidden">{% trans "Category" %}</label>
+                    <select name="category" id="id_category" class="form-select">
+                        <option value="">{% trans "All Categories" %}</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.pk }}" {% if current_category == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Vendor Filter (Admin only) -->
+                {% if vendors %}
+                <div style="min-width: 160px; flex: 1;">
+                    <label for="id_vendor" class="form-label visually-hidden">{% trans "Vendor" %}</label>
+                    <select name="vendor" id="id_vendor" class="form-select">
+                        <option value="">{% trans "All Vendors" %}</option>
+                        {% for v in vendors %}
+                        <option value="{{ v.pk }}" {% if current_vendor == v.pk|stringformat:"s" %}selected{% endif %}>{{ v.business_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <!-- Stock Filter -->
+                <div style="min-width: 140px; flex: 1;">
+                    <label for="id_stock" class="form-label visually-hidden">{% trans "Stock" %}</label>
+                    <select name="stock" id="id_stock" class="form-select">
+                        <option value="">{% trans "All Stock" %}</option>
+                        <option value="in_stock" {% if current_stock == 'in_stock' %}selected{% endif %}>{% trans "In Stock" %}</option>
+                        <option value="out_of_stock" {% if current_stock == 'out_of_stock' %}selected{% endif %}>{% trans "Out of Stock" %}</option>
+                    </select>
+                </div>
+
+                <!-- Actions -->
+                <div style="display: flex; gap: var(--space-2);">
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="filter" class="btn-icon" aria-hidden="true"></i>
+                        {% trans "Filter" %}
+                    </button>
+                    {% if search_query or current_status or current_category or current_vendor or current_stock %}
+                    <a href="{% url 'dashboard:product_list' %}" class="btn btn-outline">
+                        <i data-lucide="x" class="btn-icon" aria-hidden="true"></i>
+                        {% trans "Clear" %}
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Info -->
+        <div class="card-body" style="padding-top: var(--space-3); padding-bottom: 0;">
+            <p style="margin: 0; font-size: var(--font-size-sm); color: var(--color-text-tertiary);">
+                {% if products %}
+                    {% trans "Showing" %} {{ page_obj.start_index }}–{{ page_obj.end_index }} {% trans "of" %} {{ paginator.count }} {% trans "products" %}
+                {% else %}
+                    {% trans "No products found" %}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="table-container">
+        {% if products %}
+        <table class="table" role="table">
+            <thead>
+                <tr>
+                    <th scope="col" style="min-width: 260px;">{% trans "Product" %}</th>
+                    <th scope="col">{% trans "Category" %}</th>
+                    {% if user.can_access_admin_dashboard %}
+                    <th scope="col">{% trans "Vendor" %}</th>
+                    {% endif %}
+                    <th scope="col">{% trans "Price" %}</th>
+                    <th scope="col">{% trans "Stock" %}</th>
+                    <th scope="col">{% trans "Status" %}</th>
+                    <th scope="col">{% trans "Created" %}</th>
+                    <th scope="col" style="text-align: right;">{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: var(--space-3);">
+                            <div style="width: 44px; height: 44px; border-radius: var(--radius-md); overflow: hidden; background-color: var(--color-bg-secondary); border: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                                {% if product.images.first %}
+                                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                    <i data-lucide="image" style="width: 20px; height: 20px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <a href="{% url 'dashboard:product_detail' product.pk %}" style="font-weight: var(--font-weight-medium); color: var(--color-text-primary); text-decoration: none;" class="product-title-link">
+                                    {{ product.name }}
+                                </a>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-tertiary); margin-top: 2px;">
+                                    SKU: <code>{{ product.sku }}</code>
+                                    {% if product.is_featured %}
+                                    <span class="badge badge-warning" style="padding: 1px 6px; font-size: 10px; margin-left: var(--space-1);">{% trans "Featured" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if product.category %}
+                            <span class="badge badge-neutral">{{ product.category.name }}</span>
+                        {% else %}
+                            <span class="text-muted text-xs">—</span>
+                        {% endif %}
+                    </td>
+                    {% if user.can_access_admin_dashboard %}
+                    <td>
+                        <div style="font-weight: var(--font-weight-medium); font-size: var(--font-size-sm);">
+                            {{ product.vendor.business_name }}
+                        </div>
+                        <div class="text-xs text-muted">{{ product.vendor.vendor_id }}</div>
+                    </td>
+                    {% endif %}
+                    <td>
+                        <div style="font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">
+                            ₹{{ product.price }}
+                        </div>
+                        {% if product.compare_at_price %}
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-tertiary); text-decoration: line-through;">
+                            ₹{{ product.compare_at_price }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if product.inventory %}
+                            {% if product.inventory.quantity <= 0 %}
+                                <span class="badge badge-error badge-dot">{% trans "Out of Stock" %} (0)</span>
+                            {% elif product.inventory.is_low_stock %}
+                                <span class="badge badge-warning badge-dot">{{ product.inventory.quantity }} {% trans "left (Low)" %}</span>
+                            {% else %}
+                                <span class="badge badge-success badge-dot">{{ product.inventory.quantity }} {% trans "in stock" %}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted text-xs">{% trans "Untracked" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if product.status == 'ACTIVE' %}
+                            <span class="badge badge-success badge-dot">{% trans "Active" %}</span>
+                        {% elif product.status == 'DRAFT' %}
+                            <span class="badge badge-warning badge-dot">{% trans "Draft" %}</span>
+                        {% elif product.status == 'OUT_OF_STOCK' %}
+                            <span class="badge badge-error badge-dot">{% trans "Out of Stock" %}</span>
+                        {% else %}
+                            <span class="badge badge-neutral badge-dot">{% trans "Inactive" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted text-xs">
+                        {{ product.created_at|date:"M d, Y" }}
+                    </td>
+                    <td style="text-align: right;">
+                        <div class="table-row-actions" style="justify-content: flex-end;">
+                            <a href="{% url 'dashboard:product_detail' product.pk %}" class="table-row-action" data-tooltip="{% trans 'View details' %}" aria-label="{% trans 'View details' %}">
+                                <i data-lucide="eye" aria-hidden="true"></i>
+                            </a>
+                            <a href="{% url 'dashboard:product_edit' product.pk %}" class="table-row-action" data-tooltip="{% trans 'Edit product' %}" aria-label="{% trans 'Edit product' %}">
+                                <i data-lucide="edit" aria-hidden="true"></i>
+                            </a>
+                            <a href="{% url 'dashboard:product_delete' product.pk %}" class="table-row-action" data-tooltip="{% trans 'Delete product' %}" aria-label="{% trans 'Delete product' %}" style="color: var(--color-error-600);" data-confirm="{% trans 'Are you sure you want to delete this product? This action cannot be undone.' %}">
+                                <i data-lucide="trash-2" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state" style="padding: var(--space-16);">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background-color: var(--color-primary-50); color: var(--color-primary-600); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+                <i data-lucide="package-search" style="width: 32px; height: 32px;" aria-hidden="true"></i>
+            </div>
+            <h3 class="empty-state-title">{% trans "No Products Found" %}</h3>
+            <p class="empty-state-message" style="max-width: 420px; margin: var(--space-2) auto var(--space-6);">
+                {% if search_query or current_status or current_category or current_vendor or current_stock %}
+                    {% trans "No products match your active search or filter criteria. Try adjusting your filters." %}
+                {% else %}
+                    {% trans "Your product catalog is currently empty. Start selling by adding your first product with details, inventory, and images." %}
+                {% endif %}
+            </p>
+            <div style="display: flex; gap: var(--space-3); justify-content: center;">
+                {% if search_query or current_status or current_category or current_vendor or current_stock %}
+                <a href="{% url 'dashboard:product_list' %}" class="btn btn-outline">
+                    <i data-lucide="x" class="btn-icon" aria-hidden="true"></i>
+                    {% trans "Clear Filters" %}
+                </a>
+                {% endif %}
+                <a href="{% url 'dashboard:product_create' %}" class="btn btn-primary">
+                    <i data-lucide="plus" class="btn-icon" aria-hidden="true"></i>
+                    {% trans "Add First Product" %}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav class="pagination" aria-label="Pagination" style="padding: var(--space-4); border-top: 1px solid var(--color-border); display: flex; justify-content: center; gap: var(--space-1);">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_vendor %}&vendor={{ current_vendor }}{% endif %}{% if current_stock %}&stock={{ current_stock }}{% endif %}" class="pagination-link" aria-label="Previous page">
+            <i data-lucide="chevron-left" style="width: 16px; height: 16px;" aria-hidden="true"></i>
+        </a>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="pagination-link active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_vendor %}&vendor={{ current_vendor }}{% endif %}{% if current_stock %}&stock={{ current_stock }}{% endif %}" class="pagination-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_vendor %}&vendor={{ current_vendor }}{% endif %}{% if current_stock %}&stock={{ current_stock }}{% endif %}" class="pagination-link" aria-label="Next page">
+            <i data-lucide="chevron-right" style="width: 16px; height: 16px;" aria-hidden="true"></i>
+        </a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

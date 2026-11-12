@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/storefront.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Skip to content -->
+<a href="#storefront-main" class="sr-only focus:not-sr-only">{% trans "Skip to main content" %}</a>
+
+<header class="store-header">
+    <div class="top-announcement-bar">
+        ⚡ {% trans "Free Shipping on orders over ₹499 | 100% Genuine Marketplace Guarantee" %}
+    </div>
+
+    <!-- Main Navigation Bar -->
+    <div class="main-navbar">
+        <a href="{% url 'store:home' %}" class="store-brand" aria-label="ShopSense Marketplace Home">
+            <i data-lucide="shopping-bag" style="width: 24px; height: 24px; color: var(--store-accent);"></i>
+            ShopSense
+            <span class="brand-badge">{% trans "Market" %}</span>
+        </a>
+
+        <!-- Global Search Bar -->
+        <form action="{% url 'store:product_list' %}" method="get" class="store-search-container" role="search" aria-label="{% trans "Site search" %}">
+            <input type="search" name="q" class="store-search-input"
+                   placeholder="{% trans 'Search for products, electronics, brands, and categories...' %}"
+                   value="{{ search_query|default:'' }}" autocomplete="off">
+            <button type="submit" class="store-search-btn" aria-label="{% trans 'Search' %}">
+                <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+            </button>
+        </form>
+
+        <!-- Right Side Nav Actions -->
+        <div class="store-nav-actions">
+            {% if user.is_authenticated %}
+                <a href="{% url 'accounts:profile' %}" class="nav-action-link" aria-label="{% trans 'My Account' %}">
+                    <span class="nav-action-sub">{% trans "Hello" %}, {{ user.first_name|default:user.get_short_name }}</span>
+                    <span class="nav-action-main">{% trans "My Account" %}</span>
+                </a>
+                <a href="{% url 'orders:order_list' %}" class="nav-action-link" aria-label="{% trans 'Your Orders' %}">
+                    <span class="nav-action-sub">{% trans "Returns" %}</span>
+                    <span class="nav-action-main">& {% trans "Orders" %}</span>
+                </a>
+                {% if user.is_admin %}
+                <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-action-link" aria-label="{% trans 'Admin Dashboard' %}">
+                    <span class="nav-action-sub">{% trans "Admin" %}</span>
+                    <span class="nav-action-main">{% trans "Dashboard" %}</span>
+                </a>
+                {% elif user.is_vendor %}
+                <a href="{% url 'vendors:order_list' %}" class="nav-action-link" aria-label="{% trans 'Vendor Orders' %}">
+                    <span class="nav-action-sub">{% trans "Vendor" %}</span>
+                    <span class="nav-action-main">{% trans "Orders & Portal" %}</span>
+                </a>
+                {% endif %}
+                <a href="{% url 'accounts:logout' %}" class="nav-action-link" style="color: var(--color-error-500);" aria-label="{% trans 'Sign Out' %}">
+                    <span class="nav-action-sub">{% trans "Sign Out" %}</span>
+                    <span class="nav-action-main">{% trans "Logout" %}</span>
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="nav-action-link" aria-label="{% trans 'Sign In' %}">
+                    <span class="nav-action-sub">{% trans "Hello, sign in" %}</span>
+                    <span class="nav-action-main">{% trans "Sign In" %}</span>
+                </a>
+                <a href="{% url 'accounts:register' %}" class="nav-action-link" aria-label="{% trans 'Register' %}">
+                    <span class="nav-action-sub">{% trans "New here?" %}</span>
+                    <span class="nav-action-main">{% trans "Register" %}</span>
+                </a>
+            {% endif %}
+
+            <!-- Shopping Cart -->
+            <a href="{% url 'orders:cart' %}" class="store-cart-btn" id="nav-cart-btn" aria-label="{% trans 'Shopping Cart' %}">
+                <i data-lucide="shopping-cart" style="width: 24px; height: 24px;"></i>
+                {% if cart_items_count > 0 %}
+                <span class="cart-count-badge" id="nav-cart-count">{{ cart_items_count }}</span>
+                {% endif %}
+                <span style="font-size: var(--font-size-sm);">{% trans "Cart" %}</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Secondary Category Navbar -->
+    <nav class="sub-navbar" aria-label="{% trans "Secondary navigation" %}">
+        <div class="sub-nav-content">
+            <a href="{% url 'store:product_list' %}" class="sub-nav-link">
+                <i data-lucide="menu" style="width: 16px; height: 16px;"></i>
+                {% trans "All Products" %}
+            </a>
+            <a href="{% url 'store:product_list' %}?sort=featured" class="sub-nav-link">
+                <i data-lucide="sparkles" style="width: 14px; height: 14px; color: var(--store-accent);"></i>
+                {% trans "Featured Deals" %}
+            </a>
+            <a href="{% url 'store:product_list' %}?sort=newest" class="sub-nav-link">
+                {% trans "New Arrivals" %}
+            </a>
+            <a href="{% url 'vendors:onboarding' %}" class="sub-nav-link" style="margin-left: auto;">
+                <i data-lucide="store" style="width: 14px; height: 14px;"></i>
+                {% trans "Sell on ShopSense" %}
+            </a>
+        </div>
+    </nav>
+</header>
+
+<!-- Alert Messages -->
+{% if messages %}
+<div class="storefront-alert">
+    {% include 'storefront/partials/alert_banner.html' with messages=messages %}
+</div>
+{% endif %}
+
+<main class="storefront-main" id="storefront-main" role="main">
+    {% block storefront_content %}{% endblock %}
+</main>
+
+<footer class="store-footer">
+    <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" aria-label="{% trans 'Scroll to top' %}">
+        {% trans "Back to top" %}
+    </a>
+    <div class="footer-grid">
+        <div class="footer-col">
+            <h4>{% trans "Get to Know Us" %}</h4>
+            <ul>
+                <li><a href="{% url 'store:home' %}">{% trans "About ShopSense" %}</a></li>
+                <li><a href="#">{% trans "Careers" %}</a></li>
+                <li><a href="#">{% trans "Press Releases" %}</a></li>
+                <li><a href="#">{% trans "ShopSense Science" %}</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>{% trans "Connect with Us" %}</h4>
+            <ul>
+                <li><a href="#">{% trans "Facebook" %}</a></li>
+                <li><a href="#">{% trans "Twitter" %}</a></li>
+                <li><a href="#">{% trans "Instagram" %}</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>{% trans "Make Money with Us" %}</h4>
+            <ul>
+                <li><a href="{% url 'vendors:onboarding' %}">{% trans "Sell on ShopSense" %}</a></li>
+                <li><a href="#">{% trans "Protect and Build Your Brand" %}</a></li>
+                <li><a href="#">{% trans "Supply to ShopSense" %}</a></li>
+                <li><a href="#">{% trans "Become an Affiliate" %}</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>{% trans "Let Us Help You" %}</h4>
+            <ul>
+                <li><a href="{% url 'accounts:profile' %}">{% trans "Your Account" %}</a></li>
+                <li><a href="{% url 'orders:order_list' %}">{% trans "Your Orders" %}</a></li>
+                <li><a href="{% url 'orders:cart' %}">{% trans "Shipping Rates & Policies" %}</a></li>
+                <li><a href="#">{% trans "Returns & Replacements" %}</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p style="margin: 0;">© 2026 ShopSense Marketplace. {% trans "All rights reserved. Secure 256-bit SSL encrypted transactions." %}</p>
+    </div>
+</footer>
+{% endblock %}

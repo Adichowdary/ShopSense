@@ -1,0 +1,27 @@
+# Django Core
+Django>=5.2,<5.3
+django-environ>=0.14.0
+
+# Database
+psycopg2-binary>=2.9.9
+
+# Security
+django-axes>=8.3.1
+django-csp>=4.0
+
+# Image handling
+Pillow>=10.0.0
+
+# Development & Testing
+pytest>=7.4.0
+pytest-django>=4.14.0
+pytest-cov>=4.1.0
+factory-boy>=3.3.3
+coverage>=7.3.0
+
+# Code Quality
+ruff>=0.1.0
+black>=23.0.0
+
+# Utilities
+python-dotenv>=1.0.0

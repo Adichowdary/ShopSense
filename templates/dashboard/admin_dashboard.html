@@ -1,0 +1,302 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<!-- Stats Grid -->
+<div class="stats-grid" role="region" aria-label="Key metrics">
+    <article class="stat-card">
+        <div class="stat-icon primary" aria-hidden="true">
+            <i data-lucide="users"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ vendor_stats.total|default:0 }}</div>
+            <div class="stat-label">{% trans "Total Vendors" %}</div>
+            <div class="stat-trend positive">
+                <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
+                <span>{% trans "Pending" %}: {{ vendor_stats.pending|default:0 }}</span>
+            </div>
+        </div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-icon success" aria-hidden="true">
+            <i data-lucide="check-circle"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ vendor_stats.approved|default:0 }}</div>
+            <div class="stat-label">{% trans "Approved Vendors" %}</div>
+            <div class="stat-trend positive">
+                <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
+                <span>{% trans "Active" %}: {{ active_vendors|default:0 }}</span>
+            </div>
+        </div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-icon warning" aria-hidden="true">
+            <i data-lucide="package"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ product_stats.total|default:0 }}</div>
+            <div class="stat-label">{% trans "Total Products" %}</div>
+            <div class="stat-trend">
+                <i data-lucide="minus" style="width: 12px; height: 12px;"></i>
+                <span>{% trans "Active" %}: {{ product_stats.active|default:0 }}</span>
+            </div>
+        </div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-icon error" aria-hidden="true">
+            <i data-lucide="shopping-cart"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ order_stats.total|default:0 }}</div>
+            <div class="stat-label">{% trans "Total Orders" %}</div>
+            <div class="stat-trend positive">
+                <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
+                <span>₹{{ order_stats.revenue|default:0|floatformat:2 }}</span>
+            </div>
+        </div>
+    </article>
+</div>
+
+<!-- Dashboard Sections -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: var(--space-6);">
+    <!-- Pending Approvals -->
+    <section class="dashboard-section" aria-labelledby="pending-approvals-title">
+        <div class="section-header">
+            <h2 class="section-title" id="pending-approvals-title">{% trans "Pending Approvals" %}</h2>
+            <a href="{% url 'dashboard:vendor_applications' %}?status=PENDING" class="section-action">
+                {% trans "View All" %}
+                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+            </a>
+        </div>
+        <div class="data-table-card">
+            {% if pending_approvals %}
+            <div class="table-container">
+                <table class="table" role="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">{% trans "Vendor ID" %}</th>
+                            <th scope="col">{% trans "Business Name" %}</th>
+                            <th scope="col">{% trans "Contact" %}</th>
+                            <th scope="col">{% trans "Submitted" %}</th>
+                            <th scope="col">{% trans "Action" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in pending_approvals|slice:":5" %}
+                        <tr>
+                            <td><code>{{ application.vendor_id }}</code></td>
+                            <td>{{ application.business_name }}</td>
+                            <td>{{ application.contact_email }}</td>
+                            <td>{{ application.submitted_at|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'dashboard:vendor_application_detail' application.pk %}" class="btn btn-outline btn-sm">
+                                    {% trans "Review" %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i data-lucide="check-circle" class="empty-state-icon" style="color: var(--color-success-500);"></i>
+                <h3 class="empty-state-title">{% trans "No Pending Approvals" %}</h3>
+                <p class="empty-state-message">{% trans "All vendor applications have been reviewed." %}</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Recent Applications -->
+    <section class="dashboard-section" aria-labelledby="recent-applications-title">
+        <div class="section-header">
+            <h2 class="section-title" id="recent-applications-title">{% trans "Recent Applications" %}</h2>
+            <a href="{% url 'dashboard:vendor_applications' %}" class="section-action">
+                {% trans "View All" %}
+                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+            </a>
+        </div>
+        <div class="data-table-card">
+            {% if recent_applications %}
+            <div class="table-container">
+                <table class="table" role="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">{% trans "Vendor ID" %}</th>
+                            <th scope="col">{% trans "Business Name" %}</th>
+                            <th scope="col">{% trans "Status" %}</th>
+                            <th scope="col">{% trans "Submitted" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in recent_applications|slice:":5" %}
+                        <tr>
+                            <td><code>{{ application.vendor_id }}</code></td>
+                            <td>{{ application.business_name }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if application.status == 'PENDING' %}badge-warning
+                                    {% elif application.status == 'APPROVED' %}badge-success
+                                    {% elif application.status == 'REJECTED' %}badge-error
+                                    {% else %}badge-neutral{% endif %}">
+                                    {{ application.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ application.submitted_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i data-lucide="file-text" class="empty-state-icon"></i>
+                <h3 class="empty-state-title">{% trans "No Applications Yet" %}</h3>
+                <p class="empty-state-message">{% trans "Vendor applications will appear here once submitted." %}</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Recent Users -->
+    <section class="dashboard-section" aria-labelledby="recent-users-title" style="grid-column: 1 / -1;">
+        <div class="section-header">
+            <h2 class="section-title" id="recent-users-title">{% trans "Recently Registered Users" %}</h2>
+            <a href="{% url 'admin:accounts_user_changelist' %}" class="section-action">
+                {% trans "View All" %}
+                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+            </a>
+        </div>
+        <div class="data-table-card">
+            {% if recent_users %}
+            <div class="table-container">
+                <table class="table" role="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">{% trans "Name" %}</th>
+                            <th scope="col">{% trans "Email" %}</th>
+                            <th scope="col">{% trans "Role" %}</th>
+                            <th scope="col">{% trans "Status" %}</th>
+                            <th scope="col">{% trans "Joined" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user_obj in recent_users|slice:":10" %}
+                        <tr>
+                            <td>{{ user_obj.get_full_name|default:"-" }}</td>
+                            <td>{{ user_obj.email }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if user_obj.role == 'ADMIN' %}badge-primary
+                                    {% elif user_obj.role == 'VENDOR' %}badge-warning
+                                    {% else %}badge-neutral{% endif %}">
+                                    {{ user_obj.get_role_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if user_obj.is_active %}badge-success{% else %}badge-error{% endif %}">
+                                    {% if user_obj.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ user_obj.date_joined|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i data-lucide="users" class="empty-state-icon"></i>
+                <h3 class="empty-state-title">{% trans "No Recent Users" %}</h3>
+                <p class="empty-state-message">{% trans "New user registrations will appear here." %}</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Recent Activity -->
+    <section class="dashboard-section" aria-labelledby="recent-activity-title" style="grid-column: 1 / -1;">
+        <div class="section-header">
+            <h2 class="section-title" id="recent-activity-title">{% trans "Recent Administrative Activity" %}</h2>
+            <a href="#" class="section-action">
+                {% trans "View All" %}
+                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+            </a>
+        </div>
+        <div class="data-table-card">
+            {% if recent_activity %}
+            <div class="table-container">
+                <table class="table" role="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">{% trans "Action" %}</th>
+                            <th scope="col">{% trans "Performed By" %}</th>
+                            <th scope="col">{% trans "Target" %}</th>
+                            <th scope="col">{% trans "Time" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in recent_activity|slice:":10" %}
+                        <tr>
+                            <td>
+                                <span class="badge badge-neutral">{{ log.get_action_display }}</span>
+                            </td>
+                            <td>{{ log.user.email|default:"System" }}</td>
+                            <td>
+                                {% if log.target_vendor %}
+                                {{ log.target_vendor.business_name }} ({{ log.target_vendor.vendor_id }})
+                                {% elif log.target_user %}
+                                {{ log.target_user.email }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>{{ log.created_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i data-lucide="activity" class="empty-state-icon"></i>
+                <h3 class="empty-state-title">{% trans "No Recent Activity" %}</h3>
+                <p class="empty-state-message">{% trans "Administrative actions will be logged here." %}</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<!-- Quick Actions -->
+<section class="dashboard-section" aria-labelledby="quick-actions-title" style="margin-top: var(--space-8);">
+    <h2 class="section-title" id="quick-actions-title">{% trans "Quick Actions" %}</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
+        <a href="{% url 'vendors:onboarding' %}" class="btn btn-primary" target="_blank">
+            <i data-lucide="user-plus" class="btn-icon"></i>
+            {% trans "Invite Vendor" %}
+        </a>
+        <a href="{% url 'dashboard:vendor_applications' %}?status=PENDING" class="btn btn-secondary">
+            <i data-lucide="clipboard-check" class="btn-icon"></i>
+            {% trans "Review Applications" %}
+            {% if vendor_stats.pending > 0 %}
+            <span class="badge badge-error" style="margin-left: var(--space-2);">{{ vendor_stats.pending }}</span>
+            {% endif %}
+        </a>
+        <a href="{% url 'admin:accounts_user_add' %}" class="btn btn-secondary">
+            <i data-lucide="user-plus" class="btn-icon"></i>
+            {% trans "Add Admin User" %}
+        </a>
+        <a href="{% url 'dashboard:admin_settings' %}" class="btn btn-outline">
+            <i data-lucide="settings" class="btn-icon"></i>
+            {% trans "Settings" %}
+        </a>
+    </div>
+</section>
+{% endblock %}
+

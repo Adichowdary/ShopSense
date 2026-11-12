@@ -1,0 +1,13 @@
+{% load i18n %}
+{# Reusable alert banner for Django messages #}
+{# Usage: {% include 'storefront/partials/alert_banner.html' with messages=messages %} #}
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}" role="alert" aria-live="polite">
+        <i data-lucide="{% if message.tags == 'error' %}alert-circle{% elif message.tags == 'success' %}check-circle{% else %}info{% endif %}" style="width: 18px; height: 18px; flex-shrink: 0;" aria-hidden="true"></i>
+        <div class="alert-content">
+            <p class="alert-message">{{ message }}</p>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
