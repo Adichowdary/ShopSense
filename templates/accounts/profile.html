@@ -1,75 +1,230 @@
-﻿{% extends 'dashboard/base_dashboard.html' %}
+﻿{% extends 'storefront/base_storefront.html' %}
 {% load static i18n %}
 
-{% block page_content %}
-<div style="max-width: 720px;">
-    <div class="data-table-card">
-        <div class="card-header">
-            <h2 class="card-title">{% trans "My Profile" %}</h2>
-            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline btn-sm">
-                <i data-lucide="edit" class="btn-icon"></i>
+{% block storefront_content %}
+<div class="customer-dashboard-container" style="max-width: 1100px; margin: 0 auto; padding-bottom: 48px;">
+    <!-- Customer Welcome Header -->
+    <div style="background: var(--store-card-bg, #ffffff); border: 1px solid var(--store-border, #e5e7eb); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: var(--store-shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--store-brand, #172554); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0;">
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper|default:user.email|first|upper }}
+            </div>
+            <div>
+                <h1 style="font-size: 22px; font-weight: 700; color: var(--store-text, #111827); margin: 0; line-height: 1.2;">
+                    {% trans "Hello" %}, {{ user.get_full_name|default:user.get_short_name }}
+                </h1>
+                <p style="margin: 4px 0 0 0; color: var(--store-text-secondary, #64748b); font-size: 13px;">
+                    {{ user.email }} • {% trans "Member since" %} {{ user.date_joined|date:"F Y" }}
+                </p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline" style="font-size: 13px; padding: 8px 16px; border-radius: 8px;">
+                <i data-lucide="edit" style="width: 15px; height: 15px; margin-right: 6px;"></i>
                 {% trans "Edit Profile" %}
             </a>
+            <a href="{% url 'accounts:password_change' %}" class="btn btn-outline" style="font-size: 13px; padding: 8px 16px; border-radius: 8px;">
+                <i data-lucide="key" style="width: 15px; height: 15px; margin-right: 6px;"></i>
+                {% trans "Change Password" %}
+            </a>
+            {% if user.is_admin %}
+            <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-primary btn-store-primary" style="font-size: 13px; padding: 8px 16px; border-radius: 8px;">
+                <i data-lucide="shield" style="width: 15px; height: 15px; margin-right: 6px;"></i>
+                {% trans "Admin Portal" %}
+            </a>
+            {% elif user.is_vendor %}
+            <a href="{% url 'vendors:order_list' %}" class="btn btn-primary btn-store-primary" style="font-size: 13px; padding: 8px 16px; border-radius: 8px;">
+                <i data-lucide="store" style="width: 15px; height: 15px; margin-right: 6px;"></i>
+                {% trans "Vendor Portal" %}
+            </a>
+            {% endif %}
         </div>
-        <div class="card-body">
-            <div style="display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6); padding-bottom: var(--space-6); border-bottom: 1px solid var(--color-border);">
-                <div class="avatar avatar-xl" style="background-color: var(--color-primary-600);">
-                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+    </div>
+
+    <!-- Quick Stats Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
+        <a href="{% url 'orders:order_list' %}" style="background: #ffffff; border: 1px solid var(--store-border, #e5e7eb); border-radius: 12px; padding: 20px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 16px; transition: transform 0.15s ease, box-shadow 0.15s ease;" class="customer-stat-card">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i data-lucide="package" style="width: 22px; height: 22px;"></i>
+            </div>
+            <div>
+                <div style="font-size: 12px; color: var(--store-text-secondary, #64748b); font-weight: 500;">{% trans "My Orders" %}</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--store-text, #111827); margin-top: 2px;">{{ total_orders_count|default:"0" }}</div>
+            </div>
+        </a>
+
+        <a href="{% url 'orders:cart' %}" style="background: #ffffff; border: 1px solid var(--store-border, #e5e7eb); border-radius: 12px; padding: 20px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 16px; transition: transform 0.15s ease, box-shadow 0.15s ease;" class="customer-stat-card">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i data-lucide="shopping-cart" style="width: 22px; height: 22px;"></i>
+            </div>
+            <div>
+                <div style="font-size: 12px; color: var(--store-text-secondary, #64748b); font-weight: 500;">{% trans "Cart Items" %}</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--store-text, #111827); margin-top: 2px;">{{ cart_items_count|default:"0" }}</div>
+            </div>
+        </a>
+
+        <div style="background: #ffffff; border: 1px solid var(--store-border, #e5e7eb); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #f0fdf4; color: #16a34a; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i data-lucide="map-pin" style="width: 22px; height: 22px;"></i>
+            </div>
+            <div>
+                <div style="font-size: 12px; color: var(--store-text-secondary, #64748b); font-weight: 500;">{% trans "Saved Addresses" %}</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--store-text, #111827); margin-top: 2px;">{{ saved_addresses|length|default:"0" }}</div>
+            </div>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid var(--store-border, #e5e7eb); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #f0fdf4; color: #16a34a; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i data-lucide="check-circle" style="width: 22px; height: 22px;"></i>
+            </div>
+            <div>
+                <div style="font-size: 12px; color: var(--store-text-secondary, #64748b); font-weight: 500;">{% trans "Account Status" %}</div>
+                <div style="font-size: 15px; font-weight: 700; color: #16a34a; margin-top: 4px;">{% trans "Active & Verified" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main 2-Column Dashboard Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;" class="customer-profile-grid">
+        <!-- Left: Personal Info & Saved Addresses -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- Profile Details Card -->
+            <div style="background: #ffffff; border: 1px solid var(--store-border, #e5e7eb); border-radius: 12px; padding: 24px; box-shadow: var(--store-shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--store-border-subtle, #f1f5f9); padding-bottom: 12px;">
+                    <h2 style="font-size: 16px; font-weight: 700; color: var(--store-text, #111827); margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="user" style="width: 18px; height: 18px; color: #2563eb;"></i>
+                        {% trans "Personal Information" %}
+                    </h2>
+                    <a href="{% url 'accounts:profile_edit' %}" style="font-size: 13px; font-weight: 600; color: #2563eb; text-decoration: none;">
+                        {% trans "Edit" %}
+                    </a>
                 </div>
-                <div>
-                    <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); margin: 0;">{{ user.get_full_name|default:"-" }}</h3>
-                    <p style="margin: var(--space-1) 0 0; color: var(--color-text-secondary);">{{ user.email }}</p>
-                    <span class="badge {% if user.role == 'ADMIN' %}badge-primary{% elif user.role == 'VENDOR' %}badge-warning{% else %}badge-neutral{% endif %}" style="margin-top: var(--space-2); font-size: var(--font-size-xs);">
-                        {{ user.get_role_display }}
-                    </span>
-                </div>
+
+                <dl style="display: grid; grid-template-columns: 140px 1fr; gap: 12px; font-size: 14px; margin: 0;">
+                    <dt style="color: var(--store-text-secondary, #64748b); font-weight: 500;">{% trans "First Name" %}</dt>
+                    <dd style="color: var(--store-text, #111827); font-weight: 600; margin: 0;">{{ user.first_name|default:"-" }}</dd>
+
+                    <dt style="color: var(--store-text-secondary, #64748b); font-weight: 500;">{% trans "Last Name" %}</dt>
+                    <dd style="color: var(--store-text, #111827); font-weight: 600; margin: 0;">{{ user.last_name|default:"-" }}</dd>
+
+                    <dt style="color: var(--store-text-secondary, #64748b); font-weight: 500;">{% trans "Email Address" %}</dt>
+                    <dd style="color: var(--store-text, #111827); font-weight: 600; margin: 0;">{{ user.email }}</dd>
+
+                    <dt style="color: var(--store-text-secondary, #64748b); font-weight: 500;">{% trans "Phone Number" %}</dt>
+                    <dd style="color: var(--store-text, #111827); font-weight: 600; margin: 0;">{{ user.phone|default:"Not specified" }}</dd>
+
+                    <dt style="color: var(--store-text-secondary, #64748b); font-weight: 500;">{% trans "Account Role" %}</dt>
+                    <dd style="margin: 0;">
+                        <span class="badge badge-primary" style="font-size: 11px;">{{ user.get_role_display }}</span>
+                    </dd>
+                </dl>
             </div>
 
-            <dl style="display: grid; grid-template-columns: 180px 1fr; gap: var(--space-3) var(--space-6);">
-                <dt>{% trans "First Name" %}</dt>
-                <dd>{{ user.first_name|default:"-" }}</dd>
+            <!-- Saved Addresses Card -->
+            <div style="background: #ffffff; border: 1px solid var(--store-border, #e5e7eb); border-radius: 12px; padding: 24px; box-shadow: var(--store-shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--store-border-subtle, #f1f5f9); padding-bottom: 12px;">
+                    <h2 style="font-size: 16px; font-weight: 700; color: var(--store-text, #111827); margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="map-pin" style="width: 18px; height: 18px; color: #2563eb;"></i>
+                        {% trans "Delivery Addresses" %}
+                    </h2>
+                    <a href="{% url 'orders:checkout' %}" style="font-size: 13px; font-weight: 600; color: #2563eb; text-decoration: none;">
+                        + {% trans "New Address" %}
+                    </a>
+                </div>
 
-                <dt>{% trans "Last Name" %}</dt>
-                <dd>{{ user.last_name|default:"-" }}</dd>
+                {% if saved_addresses %}
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    {% for addr in saved_addresses %}
+                    <div style="padding: 12px; border: 1px solid var(--store-border, #e5e7eb); border-radius: 8px; background: var(--store-bg-secondary, #f5f7fa);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="font-size: 14px; color: var(--store-text, #111827);">{{ addr.first_name }} {{ addr.last_name }}</strong>
+                            {% if addr.is_default %}
+                            <span style="font-size: 11px; background: #eff6ff; color: #2563eb; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{% trans "Default" %}</span>
+                            {% endif %}
+                        </div>
+                        <div style="font-size: 13px; color: var(--store-text-secondary, #64748b); margin-top: 4px;">
+                            {{ addr.street_address }}, {{ addr.city }}, {{ addr.state }} - {{ addr.postal_code }}
+                        </div>
+                        <div style="font-size: 12px; color: var(--store-text-muted, #94a3b8); margin-top: 4px;">
+                            Phone: {{ addr.phone }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="font-size: 13px; color: var(--store-text-muted, #94a3b8); margin: 0;">
+                    {% trans "No saved delivery addresses yet. Saved addresses during checkout will appear here." %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
 
-                <dt>{% trans "Email" %}</dt>
-                <dd>{{ user.email }}</dd>
+        <!-- Right: Recent Orders & Quick Actions -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- Recent Orders Card -->
+            <div style="background: #ffffff; border: 1px solid var(--store-border, #e5e7eb); border-radius: 12px; padding: 24px; box-shadow: var(--store-shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--store-border-subtle, #f1f5f9); padding-bottom: 12px;">
+                    <h2 style="font-size: 16px; font-weight: 700; color: var(--store-text, #111827); margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="shopping-bag" style="width: 18px; height: 18px; color: #2563eb;"></i>
+                        {% trans "Recent Purchases" %}
+                    </h2>
+                    <a href="{% url 'orders:order_list' %}" style="font-size: 13px; font-weight: 600; color: #2563eb; text-decoration: none;">
+                        {% trans "View all" %} ({{ total_orders_count|default:"0" }})
+                    </a>
+                </div>
 
-                <dt>{% trans "Phone" %}</dt>
-                <dd>{{ user.phone|default:"-" }}</dd>
+                {% if recent_orders %}
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    {% for order in recent_orders %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--store-border-subtle, #f1f5f9);">
+                        <div>
+                            <div style="font-weight: 700; font-size: 14px; color: var(--store-text, #111827);">
+                                Order #<code>{{ order.order_number }}</code>
+                            </div>
+                            <div style="font-size: 12px; color: var(--store-text-secondary, #64748b); margin-top: 2px;">
+                                {{ order.created_at|date:"M d, Y" }} • {{ order.items.count }} {% trans "item(s)" %}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; font-size: 14px; color: var(--store-text, #111827);">
+                                ₹{{ order.total }}
+                            </div>
+                            <div style="margin-top: 4px;">
+                                <span class="badge {% if order.status == 'CONFIRMED' %}badge-success{% elif order.status == 'DELIVERED' %}badge-primary{% elif order.status == 'CANCELLED' %}badge-error{% else %}badge-warning{% endif %}" style="font-size: 11px;">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 24px 0;">
+                    <i data-lucide="package" style="width: 40px; height: 40px; color: var(--store-text-muted, #94a3b8); margin-bottom: 8px;"></i>
+                    <p style="font-size: 14px; color: var(--store-text-secondary, #64748b); margin: 0 0 12px 0;">
+                        {% trans "You haven't placed any orders yet." %}
+                    </p>
+                    <a href="{% url 'store:product_list' %}" class="btn btn-primary btn-store-primary btn-sm">
+                        {% trans "Explore Catalog" %}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
 
-                <dt>{% trans "Role" %}</dt>
-                <dd>{{ user.get_role_display }}</dd>
-
-                <dt>{% trans "Status" %}</dt>
-                <dd>
-                    <span class="badge {% if user.is_active %}badge-success{% else %}badge-error{% endif %}">
-                        {% if user.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
-                    </span>
-                </dd>
-
-                <dt>{% trans "Date Joined" %}</dt>
-                <dd>{{ user.date_joined|date:"M d, Y H:i" }}</dd>
-
-                <dt>{% trans "Last Login" %}</dt>
-                <dd>{{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</dd>
-
-                <dt>{% trans "Last Login IP" %}</dt>
-                <dd>{{ user.last_login_ip|default:"-" }}</dd>
-            </dl>
-
-            <div style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--color-border); display: flex; gap: var(--space-3); flex-wrap: wrap;">
-                <a href="{% url 'accounts:password_change' %}" class="btn btn-outline">
-                    <i data-lucide="key" class="btn-icon"></i>
-                    {% trans "Change Password" %}
-                </a>
-                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
-                    <i data-lucide="edit" class="btn-icon"></i>
-                    {% trans "Edit Profile" %}
-                </a>
+            <!-- Customer Protection & Fast Actions -->
+            <div style="background: var(--store-bg-secondary, #f5f7fa); border: 1px solid var(--store-border, #e5e7eb); border-radius: 12px; padding: 20px;">
+                <h3 style="font-size: 14px; font-weight: 700; color: var(--store-text, #111827); margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="shield-check" style="width: 18px; height: 18px; color: #16a34a;"></i>
+                    {% trans "ShopSense Buyer Protection" %}
+                </h3>
+                <ul style="padding-left: 20px; margin: 0; font-size: 13px; color: var(--store-text-secondary, #64748b); line-height: 1.6;">
+                    <li>100% genuine marketplace products from verified vendors</li>
+                    <li>Fast dispatch & doorstep delivery across India</li>
+                    <li>Direct vendor fulfillment with stock synchronization</li>
+                    <li>Secure tokenized transactions & data privacy</li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
-

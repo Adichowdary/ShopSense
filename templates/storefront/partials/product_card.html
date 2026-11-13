@@ -1,16 +1,16 @@
 {% load static i18n %}
 {# Product card partial #}
-{# Usage: {% include 'storefront/partials/product_card.html' with product=product show_add_to_cart=True %} #}
+{# Usage: {% include 'storefront/partials/product_card.html' with product=product show_add_to_cart=True eager=False %} #}
 <div class="product-card">
-    <a href="{% url 'store:product_detail' product.pk %}" class="product-card-img-wrap" aria-label="{% trans 'View product' %} {{ product.name }}">
+    <a href="{% url 'store:product_detail' product.pk %}" class="product-card-img-wrap product-image" aria-label="{% trans 'View product' %} {{ product.name }}">
         {% if product.images.first %}
-            <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="product-card-fallback" style="display: none;">
-                <i data-lucide="package" style="width: 40px; height: 40px; opacity: 0.5;"></i>
+            <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-img" width="220" height="220" loading="{% if eager %}eager{% else %}lazy{% endif %}" fetchpriority="{% if eager %}high{% else %}auto{% endif %}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="product-card-fallback" style="display: none;" aria-hidden="true">
+                <i data-lucide="package" style="width: 36px; height: 36px; opacity: 0.4;" aria-hidden="true"></i>
             </div>
         {% else %}
-            <div class="product-card-fallback">
-                <i data-lucide="package" style="width: 40px; height: 40px; opacity: 0.5;"></i>
+            <div class="product-card-fallback" aria-hidden="true">
+                <i data-lucide="package" style="width: 36px; height: 36px; opacity: 0.4;" aria-hidden="true"></i>
             </div>
         {% endif %}
         {% if product.compare_at_price and product.compare_at_price > product.price %}
@@ -38,7 +38,7 @@
                 <input type="hidden" name="product_id" value="{{ product.pk }}">
                 <input type="hidden" name="quantity" value="1">
                 <button type="submit" class="btn-card-action btn-card-add">
-                    <i data-lucide="shopping-cart" style="width: 15px; height: 15px; margin-right: 6px;"></i>
+                    <i data-lucide="shopping-cart" style="width: 15px; height: 15px; margin-right: 6px;" aria-hidden="true"></i>
                     {% trans "Add to Cart" %}
                 </button>
             </form>

@@ -22,7 +22,9 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="{% static 'css/components.css' %}">
+    {% block app_css %}
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    {% endblock %}
 
     {% block extra_css %}{% endblock %}
 </head>

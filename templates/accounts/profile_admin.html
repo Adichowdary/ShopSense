@@ -1,0 +1,78 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<div style="max-width: 720px;">
+    <div class="data-table-card">
+        <div class="card-header">
+            <h2 class="card-title">{% trans "Administrator Profile" %}</h2>
+            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline btn-sm">
+                <i data-lucide="edit" class="btn-icon"></i>
+                {% trans "Edit Profile" %}
+            </a>
+        </div>
+        <div class="card-body">
+            <div style="display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6); padding-bottom: var(--space-6); border-bottom: 1px solid var(--color-border-primary);">
+                <div class="avatar avatar-xl" style="background-color: var(--color-brand-navy, #172554); color: #fff; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700;">
+                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                </div>
+                <div>
+                    <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); margin: 0; color: var(--color-text-primary);">{{ user.get_full_name|default:"-" }}</h3>
+                    <p style="margin: var(--space-1) 0 0; color: var(--color-text-secondary);">{{ user.email }}</p>
+                    <span class="badge badge-primary" style="margin-top: var(--space-2); font-size: var(--font-size-xs);">
+                        {{ user.get_role_display }}
+                    </span>
+                </div>
+            </div>
+
+            <dl style="display: grid; grid-template-columns: 180px 1fr; gap: var(--space-3) var(--space-6);">
+                <dt style="color: var(--color-text-secondary); font-weight: 600;">{% trans "First Name" %}</dt>
+                <dd style="color: var(--color-text-primary);">{{ user.first_name|default:"-" }}</dd>
+
+                <dt style="color: var(--color-text-secondary); font-weight: 600;">{% trans "Last Name" %}</dt>
+                <dd style="color: var(--color-text-primary);">{{ user.last_name|default:"-" }}</dd>
+
+                <dt style="color: var(--color-text-secondary); font-weight: 600;">{% trans "Email" %}</dt>
+                <dd style="color: var(--color-text-primary);">{{ user.email }}</dd>
+
+                <dt style="color: var(--color-text-secondary); font-weight: 600;">{% trans "Phone" %}</dt>
+                <dd style="color: var(--color-text-primary);">{{ user.phone|default:"-" }}</dd>
+
+                <dt style="color: var(--color-text-secondary); font-weight: 600;">{% trans "Role" %}</dt>
+                <dd style="color: var(--color-text-primary);">{{ user.get_role_display }}</dd>
+
+                <dt style="color: var(--color-text-secondary); font-weight: 600;">{% trans "Status" %}</dt>
+                <dd>
+                    <span class="badge {% if user.is_active %}badge-success{% else %}badge-error{% endif %}">
+                        {% if user.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                    </span>
+                </dd>
+
+                <dt style="color: var(--color-text-secondary); font-weight: 600;">{% trans "Date Joined" %}</dt>
+                <dd style="color: var(--color-text-primary);">{{ user.date_joined|date:"M d, Y H:i" }}</dd>
+
+                <dt style="color: var(--color-text-secondary); font-weight: 600;">{% trans "Last Login" %}</dt>
+                <dd style="color: var(--color-text-primary);">{{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</dd>
+
+                <dt style="color: var(--color-text-secondary); font-weight: 600;">{% trans "Last Login IP" %}</dt>
+                <dd style="color: var(--color-text-primary);">{{ user.last_login_ip|default:"-" }}</dd>
+            </dl>
+
+            <div style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--color-border-primary); display: flex; gap: var(--space-3); flex-wrap: wrap;">
+                <a href="{% url 'accounts:password_change' %}" class="btn btn-outline">
+                    <i data-lucide="key" class="btn-icon"></i>
+                    {% trans "Change Password" %}
+                </a>
+                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+                    <i data-lucide="edit" class="btn-icon"></i>
+                    {% trans "Edit Profile" %}
+                </a>
+                <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-outline">
+                    <i data-lucide="layout-dashboard" class="btn-icon"></i>
+                    {% trans "Back to Dashboard" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

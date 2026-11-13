@@ -1,0 +1,60 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static i18n %}
+
+{% block page_content %}
+<div style="max-width: 560px; margin: 0 auto;">
+    <div class="data-table-card">
+        <div class="card-header">
+            <h2 class="card-title">{% trans "Edit Profile" %}</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-error" role="alert">
+                    <div class="alert-content">
+                        {% for error in form.non_field_errors %}
+                        <p class="alert-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }} <span class="required" aria-hidden="true">*</span></label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <div class="form-error">{{ form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }} <span class="required" aria-hidden="true">*</span></label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <div class="form-error">{{ form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                    <div class="form-error">{{ form.phone.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; gap: var(--space-3); justify-content: flex-end; padding-top: var(--space-4); border-top: 1px solid var(--color-border-primary);">
+                    <a href="{% url 'accounts:profile' %}" class="btn btn-outline">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="save" class="btn-icon"></i>
+                        {% trans "Save Changes" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

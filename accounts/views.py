@@ -202,6 +202,11 @@ class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     template_name = 'accounts/password_change.html'
     success_url = reverse_lazy('accounts:password_change_done')
 
+    def get_template_names(self):
+        if hasattr(self.request.user, 'role') and self.request.user.role == 'ADMIN':
+            return ['accounts/password_change_admin.html']
+        return ['accounts/password_change.html']
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = _('Change Password')
@@ -224,14 +229,39 @@ class CustomPasswordChangeDoneView(LoginRequiredMixin, PasswordChangeDoneView):
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
-    """User profile view."""
+    """User profile and customer account dashboard view."""
 
     template_name = 'accounts/profile.html'
+
+    def get_template_names(self):
+        if hasattr(self.request.user, 'role') and self.request.user.role == 'ADMIN':
+            return ['accounts/profile_admin.html']
+        return ['accounts/profile.html']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = _('My Profile')
         context['user'] = self.request.user
+        
+        # Populate customer account details safely
+        user = self.request.user
+        if hasattr(user, 'orders'):
+            context['recent_orders'] = user.orders.all().order_by('-created_at')[:5]
+            context['total_orders_count'] = user.orders.count()
+        else:
+            context['recent_orders'] = []
+            context['total_orders_count'] = 0
+
+        if hasattr(user, 'addresses'):
+            context['saved_addresses'] = user.addresses.all()
+        else:
+            context['saved_addresses'] = []
+
+        if hasattr(user, 'cart'):
+            context['cart_items_count'] = user.cart.total_items
+        else:
+            context['cart_items_count'] = 0
+
         return context
 
 
@@ -241,6 +271,11 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     form_class = ProfileUpdateForm
     template_name = 'accounts/profile_edit.html'
     success_url = reverse_lazy('accounts:profile')
+
+    def get_template_names(self):
+        if hasattr(self.request.user, 'role') and self.request.user.role == 'ADMIN':
+            return ['accounts/profile_edit_admin.html']
+        return ['accounts/profile_edit.html']
 
     def get_object(self):
         return self.request.user
