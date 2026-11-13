@@ -18,12 +18,12 @@
     <div>
         <div class="product-detail-gallery">
             {% if primary_image %}
-            <img id="main-product-img" src="{{ primary_image.image.url }}" alt="{{ product.name }}" loading="lazy"
+            <img id="main-product-img" src="{{ primary_image.image.url }}" alt="{{ product.name }}" width="300" height="300" loading="eager" fetchpriority="high"
                 onerror="this.style.display='none'; document.getElementById('main-product-fallback').style.display='block';">
             <i id="main-product-fallback" data-lucide="package"
-                style="display: none; width: 64px; height: 64px; color: var(--store-text-muted); opacity: 0.6;"></i>
+                style="display: none; width: 64px; height: 64px; color: var(--store-text-muted); opacity: 0.6;" aria-hidden="true"></i>
             {% else %}
-            <i data-lucide="package" style="width: 64px; height: 64px; color: var(--store-text-muted); opacity: 0.6;"></i>
+            <i data-lucide="package" style="width: 64px; height: 64px; color: var(--store-text-muted); opacity: 0.6;" aria-hidden="true"></i>
             {% endif %}
         </div>
 

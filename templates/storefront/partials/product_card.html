@@ -4,7 +4,7 @@
 <div class="product-card">
     <a href="{% url 'store:product_detail' product.pk %}" class="product-card-img-wrap product-image" aria-label="{% trans 'View product' %} {{ product.name }}">
         {% if product.images.first %}
-            <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-img" width="220" height="220" loading="{% if eager %}eager{% else %}lazy{% endif %}" fetchpriority="{% if eager %}high{% else %}auto{% endif %}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-img" width="180" height="180" loading="{% if eager %}eager{% else %}lazy{% endif %}" fetchpriority="{% if eager %}high{% else %}auto{% endif %}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <div class="product-card-fallback" style="display: none;" aria-hidden="true">
                 <i data-lucide="package" style="width: 36px; height: 36px; opacity: 0.4;" aria-hidden="true"></i>
             </div>
